@@ -1,0 +1,151 @@
+# data_logic.py
+import pandas as pd
+import yfinance as yf
+import streamlit as st
+
+@st.cache_data(ttl=3600)
+def fetch_data(symbol, name):
+    """
+    株価データと分析スコアを取得する関数。
+    app.pyから呼び出される心臓部。
+    """
+    ticker = yf.Ticker(f"{symbol}.SI")
+    try:
+        # 1年分のデータを取得して計算の根拠にする
+        hist = ticker.history(period="1y")
+        if hist.empty: return None
+        
+        # --- ここから追記 ---
+        last_price = hist['Close'].iloc[-1]
+        avg_price = hist['Close'].mean()
+        max_price = hist['Close'].max()
+        volatility = hist['Close'].pct_change().std() * 100 
+        # --- ここまで ---
+
+        # --- ハイブリッド計算ロジック（株価 × 財務） ---
+        info = ticker.info
+        
+        # --- 🚀 鉄壁プロトタイプ・ロジック（欠損カバー版） ---
+        valid_scores = {}
+
+        # 1. Future Focus
+        per = info.get('forwardPE') or info.get('trailingPE')
+        if per:
+            per_factor = max(0.5, 1.5 - (per / 40))
+            valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * per_factor), 200)
+
+        # 2. Market Position
+        m_cap = info.get('marketCap')
+        if m_cap:
+            cap_factor = (m_cap / 1e11) + 0.5
+            valid_scores["Market Position"] = min(int((100 + (volatility * 10)) * cap_factor), 200)
+
+        # 3. Financial Strength
+        debt = info.get('debtToEquity')
+        if debt:
+            debt_factor = max(0.5, 1.5 - (debt / 200))
+            valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * debt_factor), 200)
+
+        # --- 4. Cashflow Quality (FCF Margin ベース) ---
+        fcf = info.get('freeCashflow', 0) or 0
+        revenue = info.get('totalRevenue', 1)  # 0除算防止
+
+        fcf_margin = fcf / revenue  # 例：0.12（12%）
+        c_score = fcf_margin * 2000  # 10% → 200点
+
+        valid_scores["Cashflow Quality"] = int(min(max(c_score, 0), 200))
+
+        # 5. People (経営の質：ROE 70% × EPS成長 30% の比重へ)
+        # ROEは「経営の効率」、EPS成長は「経営の結果」を意味します
+        roe = info.get('returnOnEquity', 0) or 0
+        eps_growth = info.get('earningsGrowth', 0) or 0
+
+        # ROE 10%で100点、EPS成長5%で100点を目指すスケーリング
+        roe_score = min(max(roe * 100 * 10, 0), 200)
+        eps_score = min(max(eps_growth * 100 * 20, 0), 200)
+
+        # 【経営の質重視】比率を 0.7 : 0.3 に設定
+        people_raw = (roe_score * 0.7) + (eps_score * 0.3)
+        valid_scores["People"] = int(min(people_raw, 200))
+
+        # --- 🚀 200点張り付きを解消し、銘柄の「差」を出す代入ロジック ---
+        AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+        company_axes = {}
+        
+        for k in AXES_LIST:
+            val = valid_scores.get(k)
+            if val is not None and val != 0:
+                # 0.85倍のスケーリングで185点固定を破壊し、バラツキを作ります
+                company_axes[k] = int(min(val * 0.85, 195)) 
+            else:
+                # データがない、あるいは0の場合は「100（標準）」
+                company_axes[k] = 100
+        
+        # 合計スコアの算出
+        total_score = int(sum(company_axes.values()))
+        return {
+            "axes": company_axes,
+            "total": total_score,
+            "name": name,
+            "price_hist": hist['Close'],
+            "current_price": last_price,
+            "pe": per if per else "N/A",
+            "market_cap": m_cap if m_cap else 0
+        }
+    except Exception as e:
+        st.error(f"Stock Data Error: {e}")
+        return None
+
+# data_logic.py の末尾に追記
+
+@st.cache_data(ttl=3600)
+def fetch_oil_data():
+    """WTI原油先物データを取得し、動的なマーケットスコアに変換する"""
+    ticker = yf.Ticker("CL=F")
+    try:
+        # この下の行の左側に、必ず半角スペースが「8個」入っている必要があります
+        hist = ticker.history(period="1y")
+        if hist.empty:
+            return None
+        
+        # --- 本物志向の計算ロジック ---
+        last_price = hist['Close'].iloc[-1]
+        avg_price = hist['Close'].mean()
+        max_price = hist['Close'].max()
+        volatility = hist['Close'].pct_change().std() * 100 
+        
+        # 概念ペア・ロジック
+        demand_score = (last_price / avg_price) * 100
+        geo_risk_score = 100 + (volatility * 15)
+        price_level_score = (last_price / max_price) * 150
+        # 1. まず「recent_volatility」を計算して定義する（これが抜けていました）
+        recent_volatility = hist['Close'].pct_change().rolling(window=20).std().iloc[-1] * 100
+
+        # 2. 定義した後に、それを使ってスコアを出す
+        supply_stability = max(50, 180 - (recent_volatility * 40))
+        market_heat_score = (last_price / hist['Close'].iloc[0]) * 120
+
+        oil_axes = {
+            "Future Focus": min(demand_score, 200),
+            "Market Position": min(geo_risk_score, 200),
+            "Financial Strength": min(price_level_score, 200),
+            "Cashflow Quality": supply_stability,
+            "People": min(market_heat_score, 200)
+        }
+
+        # 5つの指標の合計を計算
+        
+        total_score = int(sum(oil_axes.values()))
+
+        return {
+            "axes": oil_axes,
+            "total": total_score,
+            "name": "WTI CRUDE OIL", # 直接名前を書く
+            "price_hist": hist['Close'],
+            "current_price": last_price,
+            "pe": 0,
+            "market_cap": 0
+        }
+    except Exception as e:
+        st.error(f"Oil Data Error: {e}")
+        return None
