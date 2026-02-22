@@ -96,7 +96,7 @@ def fetch_data(symbol, name):
             "market_cap": m_cap if m_cap else 0
         }
     except Exception: # ← 「as e」は消しても消さなくてもOK
-    return None    # ← これだけ残します
+        return None    # ← これだけ残します
 
 # data_logic.py の末尾に追記
 
