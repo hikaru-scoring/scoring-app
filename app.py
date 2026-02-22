@@ -40,7 +40,11 @@ def main():
     compare_oil = c3.button("🛢️ COMPARE WITH OIL")
 
     # 2. メイン銘柄のデータ取得
-    data = fetch_data(symbol, name)
+    try:
+        data = fetch_data(symbol, name)
+    except Exception:
+        st.error("⚠️ Connection busy. Please refresh the page in 30 seconds.")
+        st.stop()
 
     if data:
         # 3. ボタンごとの動作設定
@@ -230,4 +234,5 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
 # 💡 ここからは if data: ブロックの外側。一番左に配置
 if __name__ == "__main__":
+
     main()
