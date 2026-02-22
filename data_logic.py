@@ -103,7 +103,8 @@ def fetch_data(symbol, name):
 @st.cache_data(ttl=3600)
 def fetch_oil_data():
     """WTI原油先物データを取得し、動的なマーケットスコアに変換する"""
-    time.sleep(1) # ← ここ！
+    import time   # ← この1行を必ずここに追加してください！
+    time.sleep(1) 
     ticker = yf.Ticker("CL=F")
     try:
         # この下の行の左側に、必ず半角スペースが「8個」入っている必要があります
