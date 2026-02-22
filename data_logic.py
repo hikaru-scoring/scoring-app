@@ -95,15 +95,15 @@ def fetch_data(symbol, name):
             "pe": per if per else "N/A",
             "market_cap": m_cap if m_cap else 0
         }
-    except Exception as e:
-        st.error(f"Stock Data Error: {e}")
-        return None
+    except Exception: # ← 「as e」は消しても消さなくてもOK
+    return None    # ← これだけ残します
 
 # data_logic.py の末尾に追記
 
 @st.cache_data(ttl=3600)
 def fetch_oil_data():
     """WTI原油先物データを取得し、動的なマーケットスコアに変換する"""
+    time.sleep(1) # ← ここ！
     ticker = yf.Ticker("CL=F")
     try:
         # この下の行の左側に、必ず半角スペースが「8個」入っている必要があります
@@ -149,6 +149,5 @@ def fetch_oil_data():
             "pe": 0,
             "market_cap": 0
         }
-    except Exception as e:
-        st.error(f"Oil Data Error: {e}")
+    except Exception:
         return None
