@@ -3,12 +3,15 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=43200)
 def fetch_data(symbol, name):
     """
     株価データと分析スコアを取得する関数。
     app.pyから呼び出される心臓部。
     """
+
+    import time  # ← もし一番上に書いていなければここに追加
+    time.sleep(1) # ← ここ！tickerのすぐ上に入れます
     ticker = yf.Ticker(f"{symbol}.SI")
     try:
         # 1年分のデータを取得して計算の根拠にする
