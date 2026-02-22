@@ -217,11 +217,17 @@ def main():
     </p>
 </div>
 </div>
+""", unsafe_allow_html=True)
 
-<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">
-Secure Your Slot Now
-</div>
+        # 🚀 本物のリンクボタン（ここだけPythonのコードとして書く）
+        st.link_button(
+            "SECURE YOUR SLOT NOW", 
+            "https://square.link/u/s2z4dwRO",
+            use_container_width=True,
+            type="primary"
+        )
 
+        st.markdown("""
 <div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
     <strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. While we strive for accuracy, we do not guarantee the completeness or reliability of the data provided. All investment decisions should be made at the user's own discretion and risk. We shall not be held liable for any loss or damage arising from the use of this service.
 </div>
