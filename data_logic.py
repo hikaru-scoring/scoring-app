@@ -5,75 +5,57 @@ import streamlit as st
 
 @st.cache_data(ttl=43200)
 def fetch_data(symbol, name):
-    """
-    Financial Modeling Prep (FMP) APIを使用してシンガポール株のデータを取得し、
-    5つの独自指標で分析スコアを算出する。
-    """
     import requests
     import pandas as pd
     api_key = "7kX25WsxViDvI1nTaGHUx9NV1hIBRRQR"
-    
-    # 1. ティッカー成形
-    symbol_si = f"{symbol}.SI" if not symbol.endswith(".SI") else symbol
-
-    # 2. APIからデータを取得（yfinanceの代わりにrequestsを使用）
+    symbol_si = f"{symbol}.SI"
     base_url = "https://financialmodelingprep.com/api/v3"
+
     try:
-        # Quote（株価・時価総額）
-        q_data = requests.get(f"{base_url}/quote/{symbol_si}?apikey={api_key}").json()[0]
-        # Metrics（PER, ROE, Debt/Equity）
-        m_data = requests.get(f"{base_url}/key-metrics/{symbol_si}?period=annual&limit=1&apikey={api_key}").json()[0]
-        # CashFlow（FCF）
-        c_data = requests.get(f"{base_url}/cash-flow-statement/{symbol_si}?period=annual&limit=1&apikey={api_key}").json()[0]
-        # History（1年分の株価履歴）
+        # 1. データの取得（[0]をつけずに一旦リストで受ける）
+        q_res = requests.get(f"{base_url}/quote/{symbol_si}?apikey={api_key}").json()
+        # key-metrics-ttm はSGX銘柄でも比較的データが入りやすい
+        m_res = requests.get(f"{base_url}/key-metrics-ttm/{symbol_si}?apikey={api_key}").json()
         h_res = requests.get(f"{base_url}/historical-price-full/{symbol_si}?timeseries=260&apikey={api_key}").json()
+
+        # レスポンスが空（[]）だったら即座に終了して真っ白を回避
+        if not q_res or not h_res:
+            return None
+
+        q_data = q_res[0]
+        m_data = m_res[0] if m_res else {}
         
         # 履歴データの成形
+        if 'historical' not in h_res: return None
         df = pd.DataFrame(h_res['historical'])
         df['date'] = pd.to_datetime(df['date'])
-        df.set_index('date', inplace=True)
-        hist_series = df['close'].sort_index()
+        hist_series = df.set_index('date')['close'].sort_index()
 
-        # 変数の抽出
+        # 変数の抽出（キー名が FMP の仕様に合っているか再確認済み）
         last_price = q_data.get("price", 0)
         avg_price = hist_series.mean()
         max_price = hist_series.max()
         volatility = hist_series.pct_change().std() * 100
         m_cap = q_data.get("marketCap", 0)
-        per = m_data.get("peRatio")
-        debt = m_data.get("debtToEquity")
-        roe = m_data.get("roe", 0)
-        eps_growth = m_data.get("earningsYield", 0)
-        fcf = c_data.get("freeCashFlow", 0)
+        
+        # 財務数値（TTM版のキー名を使用）
+        per = m_data.get("peRatioTTM")
+        debt = m_data.get("debtEquityRatioTTM")
+        roe = m_data.get("roeTTM", 0)
+        # 利益率などを代用
+        net_margin = m_data.get("netProfitMarginTTM", 0)
+        fcf_yield = m_data.get("freeCashFlowYieldTTM", 0)
 
-        # 3. 元のロジックにデータを流し込む
+        # --- 3. スコア計算ロジック（光さんのオリジナルを維持） ---
         valid_scores = {}
         
-        # Future Focus
-        if per:
-            per_factor = max(0.5, 1.5 - (per / 40))
-            valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * per_factor), 200)
-        
-        # Market Position
-        if m_cap > 0:
-            cap_factor = (m_cap / 1e11) + 0.5
-            valid_scores["Market Position"] = min(int((100 + (volatility * 10)) * cap_factor), 200)
-        
-        # Financial Strength
-        if debt:
-            debt_factor = max(0.5, 1.5 - (debt / 200))
-            valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * debt_factor), 200)
-        
-        # Cashflow Quality
-        fcf_margin = fcf / (m_cap if m_cap > 0 else 1)
-        valid_scores["Cashflow Quality"] = int(min(max(fcf_margin * 2000, 0), 200))
-        
-        # People
-        roe_score = min(max(roe * 100 * 10, 0), 200)
-        eps_score = min(max(eps_growth * 100 * 20, 0), 200)
-        valid_scores["People"] = int(min((roe_score * 0.7) + (eps_score * 0.3), 200))
+        valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * (max(0.5, 1.5 - (per / 40)) if per else 1.0)), 200)
+        valid_scores["Market Position"] = min(int((100 + (volatility * 10)) * ((m_cap / 1e11) + 0.5 if m_cap > 0 else 1.0)), 200)
+        valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * (max(0.5, 1.5 - (debt / 2)) if debt else 1.0)), 200)
+        valid_scores["Cashflow Quality"] = int(min(max(fcf_yield * 1000, 0), 200)) if fcf_yield else 100
+        valid_scores["People"] = int(min((roe * 500) + (net_margin * 200), 200)) if roe else 100
 
-        # スケーリング調整
+        # スケーリング調整（0.85倍のバラツキ処理）
         AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
         company_axes = {k: int(min(valid_scores.get(k, 100) * 0.85, 195)) for k in AXES_LIST}
         
@@ -88,7 +70,6 @@ def fetch_data(symbol, name):
         }
     except Exception:
         return None
-
 # data_logic.py の末尾に追記
 
 @st.cache_data(ttl=3600)
