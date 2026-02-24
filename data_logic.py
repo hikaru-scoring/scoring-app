@@ -10,7 +10,7 @@ def fetch_data(symbol, name):
     # 光さんの2つの武器（キー）
     twelve_key = st.secrets["TWELVE_API_KEY"]
     
-    symbol_tw = f"{symbol}:SGX" 
+    symbol_tw = f"{symbol}.SI" 
 
     try:
         # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
