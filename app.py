@@ -42,8 +42,8 @@ def main():
     # 2. メイン銘柄のデータ取得
     try:
         data = fetch_data(symbol, name)
-    except Exception:
-        st.error("⚠️ Connection busy. Please refresh the page in 30 seconds.")
+    except Exception as e:
+        st.error(f"ERROR: {e}")
         st.stop()
 
     if data:
