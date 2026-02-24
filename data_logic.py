@@ -10,11 +10,11 @@ def fetch_data(symbol, name):
     # 光さんの2つの武器（キー）
     twelve_key = st.secrets["TWELVE_API_KEY"]
     
-    symbol_tw = f"{symbol}.SI" 
+    symbol_tw = f"{symbol}" 
 
     try:
         # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
-        h_url = f"https://api.twelvedata.com/time_series?symbol={symbol_tw}&interval=1day&outputsize=260&apikey={twelve_key}"
+        h_url = f"https://api.twelvedata.com/time_series?symbol={symbol}&exchange=SGX&interval=1day&outputsize=260&apikey={twelve_key}"
         h_res = requests.get(h_url).json()
         st.write("DEBUG h_res:", h_res)
         if "values" not in h_res: return None
