@@ -16,6 +16,10 @@ def fetch_data(symbol, name):
     time.sleep(random.uniform(1.0, 3.0)) 
     
     ticker = yf.Ticker(f"{symbol}.SI")
+    # Yahooのガードを突破するために「普通のブラウザ」のフリをする
+    ticker.session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    })
     try:
         # 1年分のデータを取得して計算の根拠にする
         hist = ticker.history(period="1y")
