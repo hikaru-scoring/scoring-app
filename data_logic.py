@@ -16,6 +16,7 @@ def fetch_data(symbol, name):
         # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
         h_url = f"https://api.twelvedata.com/time_series?symbol={symbol_tw}&interval=1day&outputsize=260&apikey={twelve_key}"
         h_res = requests.get(h_url).json()
+        st.write("DEBUG h_res:", h_res)
         if "values" not in h_res: return None
         
         # 2. 【財務データ】FMPの無料枠で限界まで挑戦！
