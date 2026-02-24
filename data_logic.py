@@ -16,7 +16,7 @@ def fetch_data(symbol, name):
         # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
         h_url = f"https://eodhistoricaldata.com/api/eod/{symbol}.SI?api_token={eod_key}&fmt=json"
         h_res = requests.get(h_url, timeout=15).json()
-        st.write("DEBUG h_res:", h_res)
+        st.write("DEBUG EOD RESPONSE:", h_res)
         if not isinstance(h_res, list) or len(h_res) == 0:
             return None
         
@@ -29,6 +29,7 @@ def fetch_data(symbol, name):
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
         df["date"] = pd.to_datetime(df["date"], errors="coerce")
         hist_series = df.dropna(subset=["date","close"]).set_index("date")["close"].sort_index()
+        st.write("DEBUG HIST LENGTH:", len(hist_series))
 
         # 各種数値の抽出（データがなければ0や1.0を代入して計算停止を防ぐ）
         last_price = float(hist_series.iloc[-1])
@@ -80,6 +81,7 @@ def fetch_oil_data():
     try:
         # この下の行の左側に、必ず半角スペースが「8個」入っている必要があります
         hist = ticker.history(period="1y")
+        st.write("DEBUG OIL EMPTY:", hist.empty)
         if hist.empty:
             return None
         
