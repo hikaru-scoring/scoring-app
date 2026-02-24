@@ -7,55 +7,56 @@ import streamlit as st
 def fetch_data(symbol, name):
     import requests
     import pandas as pd
-    api_key = "7kX25WsxViDvI1nTaGHUx9NV1hIBRRQR"
-    symbol_si = f"{symbol}.SI"
+    # 光さんの2つの武器（キー）
+    twelve_key = "d5cd7918515d42de932ac3a94a76ad05"
+    fmp_key = "7kX25WsxViDvI1nTaGHUx9NV1hIBRRQR"
+    
+    symbol_tw = f"{symbol}:SES" 
+    symbol_fmp = f"{symbol}.SI"
     base_url = "https://financialmodelingprep.com/api/v3"
 
     try:
-        # 1. データの取得（[0]をつけずに一旦リストで受ける）
-        q_res = requests.get(f"{base_url}/quote/{symbol_si}?apikey={api_key}").json()
-        # key-metrics-ttm はSGX銘柄でも比較的データが入りやすい
-        m_res = requests.get(f"{base_url}/key-metrics-ttm/{symbol_si}?apikey={api_key}").json()
-        h_res = requests.get(f"{base_url}/historical-price-full/{symbol_si}?timeseries=260&apikey={api_key}").json()
-
-        # レスポンスが空（[]）だったら即座に終了して真っ白を回避
-        if not q_res or not h_res:
-            return None
-
-        q_data = q_res[0]
-        m_data = m_res[0] if m_res else {}
+        # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
+        h_url = f"https://api.twelvedata.com/time_series?symbol={symbol_tw}&interval=1day&outputsize=260&apikey={twelve_key}"
+        h_res = requests.get(h_url).json()
+        if "values" not in h_res: return None
         
-        # 履歴データの成形
-        if 'historical' not in h_res: return None
-        df = pd.DataFrame(h_res['historical'])
-        df['date'] = pd.to_datetime(df['date'])
-        hist_series = df.set_index('date')['close'].sort_index()
+        # 2. 【財務データ】FMPの無料枠で限界まで挑戦！
+        # 比較的ロックがゆるい 'key-metrics-ttm' を狙います
+        m_res = requests.get(f"{base_url}/key-metrics-ttm/{symbol_fmp}?apikey={fmp_key}").json()
+        m_data = m_res[0] if (m_res and isinstance(m_res, list)) else {}
 
-        # 変数の抽出（キー名が FMP の仕様に合っているか再確認済み）
-        last_price = q_data.get("price", 0)
+        # 3. データの成形（Twelve Data用）
+        df = pd.DataFrame(h_res["values"])
+        df["close"] = pd.to_numeric(df["close"])
+        df["datetime"] = pd.to_datetime(df["datetime"])
+        hist_series = df.set_index("datetime")["close"].sort_index()
+
+        # 各種数値の抽出（データがなければ0や1.0を代入して計算停止を防ぐ）
+        last_price = float(hist_series.iloc[-1])
         avg_price = hist_series.mean()
         max_price = hist_series.max()
         volatility = hist_series.pct_change().std() * 100
-        m_cap = q_data.get("marketCap", 0)
         
-        # 財務数値（TTM版のキー名を使用）
+        # --- ここがチャレンジ箇所！本物のデータを狙う ---
         per = m_data.get("peRatioTTM")
+        roe = m_data.get("roeTTM")
         debt = m_data.get("debtEquityRatioTTM")
-        roe = m_data.get("roeTTM", 0)
-        # 利益率などを代用
-        net_margin = m_data.get("netProfitMarginTTM", 0)
-        fcf_yield = m_data.get("freeCashFlowYieldTTM", 0)
+        fcf_yield = m_data.get("freeCashFlowYieldTTM")
 
-        # --- 3. スコア計算ロジック（光さんのオリジナルを維持） ---
+        # --- 4. スコア計算（データがある時だけ反映、なければ安全な値で計算） ---
         valid_scores = {}
-        
+        # 将来性 (PERがあれば反映)
         valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * (max(0.5, 1.5 - (per / 40)) if per else 1.0)), 200)
-        valid_scores["Market Position"] = min(int((100 + (volatility * 10)) * ((m_cap / 1e11) + 0.5 if m_cap > 0 else 1.0)), 200)
+        # 市場性
+        valid_scores["Market Position"] = min(int(100 + (volatility * 10)), 200)
+        # 財務健全性 (負債比率があれば反映)
         valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * (max(0.5, 1.5 - (debt / 2)) if debt else 1.0)), 200)
-        valid_scores["Cashflow Quality"] = int(min(max(fcf_yield * 1000, 0), 200)) if fcf_yield else 100
-        valid_scores["People"] = int(min((roe * 500) + (net_margin * 200), 200)) if roe else 100
+        # キャッシュフロー (FCF利回りがあれば反映)
+        valid_scores["Cashflow Quality"] = int(min(max(fcf_yield * 1000, 0), 200)) if fcf_yield else 120
+        # 人材・経営 (ROEがあれば反映)
+        valid_scores["People"] = int(min(roe * 500, 200)) if roe else 100
 
-        # スケーリング調整（0.85倍のバラツキ処理）
         AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
         company_axes = {k: int(min(valid_scores.get(k, 100) * 0.85, 195)) for k in AXES_LIST}
         
@@ -66,7 +67,7 @@ def fetch_data(symbol, name):
             "price_hist": hist_series,
             "current_price": last_price,
             "pe": per if per else "N/A",
-            "market_cap": m_cap
+            "market_cap": "N/A"
         }
     except Exception:
         return None
