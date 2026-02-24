@@ -10,8 +10,11 @@ def fetch_data(symbol, name):
     app.pyから呼び出される心臓部。
     """
 
-    import time  # ← もし一番上に書いていなければここに追加
-    time.sleep(1) # ← ここ！tickerのすぐ上に入れます
+    # 修正：ランダムな1.0〜3.0秒の待機を入れてブロック回避
+    import time
+    import random
+    time.sleep(random.uniform(1.0, 3.0)) 
+    
     ticker = yf.Ticker(f"{symbol}.SI")
     try:
         # 1年分のデータを取得して計算の根拠にする
@@ -25,8 +28,19 @@ def fetch_data(symbol, name):
         volatility = hist['Close'].pct_change().std() * 100 
         # --- ここまで ---
 
-        # --- ハイブリッド計算ロジック（株価 × 財務） ---
-        info = ticker.info
+        # 修正：高速なfast_infoを優先し、重いinfoは失敗しても無視して続行する
+        try:
+            f_info = ticker.fast_info
+            m_cap = f_info.get('marketCap') or 0
+        except:
+            m_cap = 0
+
+        try:
+            info = ticker.info
+            if not isinstance(info, dict):
+                info = {}
+        except:
+            info = {}
         
         # --- 🚀 鉄壁プロトタイプ・ロジック（欠損カバー版） ---
         valid_scores = {}
