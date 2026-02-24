@@ -18,7 +18,7 @@ def fetch_data(symbol, name):
         h_res = requests.get(h_url, timeout=15).json()
         st.write("DEBUG h_res:", h_res)
         if not isinstance(h_res, list) or len(h_res) == 0:
-            eturn None
+            return None
         
         # 2. 【財務データ】FMPの無料枠で限界まで挑戦！
         # 比較的ロックがゆるい 'key-metrics-ttm' を狙います
