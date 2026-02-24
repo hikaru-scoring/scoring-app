@@ -5,32 +5,30 @@ import streamlit as st
 
 @st.cache_data(ttl=43200)
 def fetch_data(symbol, name):
-    st.write("Test yfinance:")
-    test = yf.Ticker("D05.SI").history(period="1y")
-    st.write(test.tail())
     import requests
     import pandas as pd
     # 光さんの2つの武器（キー）
-    twelve_key = st.secrets["TWELVE_API_KEY"]
+    eod_key = st.secrets["EODHD_API_KEY"]
     
     symbol_tw = f"{symbol}" 
 
     try:
         # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
-        h_url = f"https://api.twelvedata.com/time_series?symbol={symbol}&exchange=SGX&interval=1day&outputsize=260&apikey={twelve_key}"
-        h_res = requests.get(h_url).json()
+        h_url = f"https://eodhistoricaldata.com/api/eod/{symbol}.SI?api_token={eod_key}&fmt=json"
+        h_res = requests.get(h_url, timeout=15).json()
         st.write("DEBUG h_res:", h_res)
-        if "values" not in h_res: return None
+        if not isinstance(h_res, list) or len(h_res) == 0:
+            eturn None
         
         # 2. 【財務データ】FMPの無料枠で限界まで挑戦！
         # 比較的ロックがゆるい 'key-metrics-ttm' を狙います
         m_data = {}
 
         # 3. データの成形（Twelve Data用）
-        df = pd.DataFrame(h_res["values"])
-        df["close"] = pd.to_numeric(df["close"])
-        df["datetime"] = pd.to_datetime(df["datetime"])
-        hist_series = df.set_index("datetime")["close"].sort_index()
+        df = pd.DataFrame(h_res)
+        df["close"] = pd.to_numeric(df["close"], errors="coerce")
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        hist_series = df.dropna(subset=["date","close"]).set_index("date")["close"].sort_index()
 
         # 各種数値の抽出（データがなければ0や1.0を代入して計算停止を防ぐ）
         last_price = float(hist_series.iloc[-1])
