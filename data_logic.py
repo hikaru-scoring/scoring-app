@@ -3,7 +3,6 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 
-@st.cache_data(ttl=43200)
 def fetch_data(symbol, name):
     import requests
     import pandas as pd
@@ -72,7 +71,6 @@ def fetch_data(symbol, name):
         return None
 # data_logic.py の末尾に追記
 
-@st.cache_data(ttl=3600)
 def fetch_oil_data():
     """WTI原油先物データを取得し、動的なマーケットスコアに変換する"""
     import time   # ← この1行を必ずここに追加してください！
