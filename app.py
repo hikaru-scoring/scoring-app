@@ -42,6 +42,9 @@ def main():
     # 2. メイン銘柄のデータ取得
     try:
         data = fetch_data(symbol, name)
+        
+        st.write("FETCH CALLED")
+        st.write("DATA VALUE:", data)
     except Exception as e:
         st.error(f"ERROR: {e}")
         st.stop()
