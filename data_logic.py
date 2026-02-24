@@ -8,12 +8,9 @@ def fetch_data(symbol, name):
     import requests
     import pandas as pd
     # 光さんの2つの武器（キー）
-    twelve_key = "d5cd7918515d42de932ac3a94a76ad05"
-    fmp_key = "7kX25WsxViDvI1nTaGHUx9NV1hIBRRQR"
+    twelve_key = st.secrets["TWELVE_API_KEY"]
     
-    symbol_tw = f"{symbol}:SES" 
-    symbol_fmp = f"{symbol}.SI"
-    base_url = "https://financialmodelingprep.com/api/v3"
+    symbol_tw = f"{symbol}.SGX" 
 
     try:
         # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
@@ -23,8 +20,7 @@ def fetch_data(symbol, name):
         
         # 2. 【財務データ】FMPの無料枠で限界まで挑戦！
         # 比較的ロックがゆるい 'key-metrics-ttm' を狙います
-        m_res = requests.get(f"{base_url}/key-metrics-ttm/{symbol_fmp}?apikey={fmp_key}").json()
-        m_data = m_res[0] if (m_res and isinstance(m_res, list)) else {}
+        m_data = {}
 
         # 3. データの成形（Twelve Data用）
         df = pd.DataFrame(h_res["values"])
@@ -67,7 +63,7 @@ def fetch_data(symbol, name):
             "price_hist": hist_series,
             "current_price": last_price,
             "pe": per if per else "N/A",
-            "market_cap": "N/A"
+            "market_cap": 0
         }
     except Exception:
         return None
