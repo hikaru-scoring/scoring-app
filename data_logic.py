@@ -123,5 +123,6 @@ def fetch_oil_data():
             "pe": 0,
             "market_cap": 0
         }
-    except Exception:
+    except Exception as e:
+        st.write("ERROR INSIDE FETCH:", e)
         return None
