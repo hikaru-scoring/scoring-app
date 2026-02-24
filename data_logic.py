@@ -10,98 +10,76 @@ def fetch_data(symbol, name):
     5つの独自指標で分析スコアを算出する。
     """
     import requests
+    import pandas as pd
     api_key = "7kX25WsxViDvI1nTaGHUx9NV1hIBRRQR"
     
-    # ティッカーの整形
-    ticker_symbol = f"{symbol}.SI" if not symbol.endswith(".SI") else symbol
+    # 1. ティッカー成形
+    symbol_si = f"{symbol}.SI" if not symbol.endswith(".SI") else symbol
 
-    # APIエンドポイントの設定
-    quote_url = f"https://financialmodelingprep.com/api/v3/quote/{ticker_symbol}?apikey={api_key}"
-    metrics_url = f"https://financialmodelingprep.com/api/v3/key-metrics/{ticker_symbol}?period=annual&limit=1&apikey={api_key}"
-    cashflow_url = f"https://financialmodelingprep.com/api/v3/cash-flow-statement/{ticker_symbol}?period=annual&limit=1&apikey={api_key}"
-    enterprise_url = f"https://financialmodelingprep.com/api/v3/enterprise-values/{ticker_symbol}?period=annual&limit=1&apikey={api_key}"
-    history_url = f"https://financialmodelingprep.com/api/v3/historical-price-full/{ticker_symbol}?timeseries=260&apikey={api_key}"
-
+    # 2. APIからデータを取得（yfinanceの代わりにrequestsを使用）
+    base_url = "https://financialmodelingprep.com/api/v3"
     try:
-        # 各データの取得
-        quote_res = requests.get(quote_url).json()
-        metrics_res = requests.get(metrics_url).json()
-        cashflow_res = requests.get(cashflow_url).json()
-        history_res = requests.get(history_url).json()
-
-        if not quote_res or not metrics_res or not cashflow_res or not history_res:
-            return None
-
-        # データの展開
-        quote = quote_res[0]
-        metrics = metrics_res[0]
-        cashflow = cashflow_res[0]
+        # Quote（株価・時価総額）
+        q_data = requests.get(f"{base_url}/quote/{symbol_si}?apikey={api_key}").json()[0]
+        # Metrics（PER, ROE, Debt/Equity）
+        m_data = requests.get(f"{base_url}/key-metrics/{symbol_si}?period=annual&limit=1&apikey={api_key}").json()[0]
+        # CashFlow（FCF）
+        c_data = requests.get(f"{base_url}/cash-flow-statement/{symbol_si}?period=annual&limit=1&apikey={api_key}").json()[0]
+        # History（1年分の株価履歴）
+        h_res = requests.get(f"{base_url}/historical-price-full/{symbol_si}?timeseries=260&apikey={api_key}").json()
         
-        # 株価履歴をpandas Seriesに変換（yfinance互換）
-        hist_df = pd.DataFrame(history_res['historical'])
-        hist_df['date'] = pd.to_datetime(hist_df['date'])
-        hist_df.set_index('date', inplace=True)
-        hist_series = hist_df['close'].sort_index()
+        # 履歴データの成形
+        df = pd.DataFrame(h_res['historical'])
+        df['date'] = pd.to_datetime(df['date'])
+        df.set_index('date', inplace=True)
+        hist_series = df['close'].sort_index()
 
-        # 基本数値の抽出
-        last_price = quote.get("price")
+        # 変数の抽出
+        last_price = q_data.get("price", 0)
         avg_price = hist_series.mean()
         max_price = hist_series.max()
         volatility = hist_series.pct_change().std() * 100
-        m_cap = quote.get("marketCap") or 0
-        
-        # 指標の抽出
-        per = metrics.get("peRatio")
-        debt = metrics.get("debtToEquity")
-        fcf = cashflow.get("freeCashFlow") or 0
-        revenue = quote.get("revenue") or 1 # 万が一のために1を代入
-        roe = metrics.get("roe") or 0
-        eps_growth = metrics.get("earningsYield") or 0 # EPS成長の代わりに収益率を参考
+        m_cap = q_data.get("marketCap", 0)
+        per = m_data.get("peRatio")
+        debt = m_data.get("debtToEquity")
+        roe = m_data.get("roe", 0)
+        eps_growth = m_data.get("earningsYield", 0)
+        fcf = c_data.get("freeCashFlow", 0)
 
-        # --- 🚀 鉄壁プロトタイプ・ロジック（FMPデータ適用版） ---
+        # 3. 元のロジックにデータを流し込む
         valid_scores = {}
-
-        # 1. Future Focus
+        
+        # Future Focus
         if per:
             per_factor = max(0.5, 1.5 - (per / 40))
             valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * per_factor), 200)
-
-        # 2. Market Position
-        if m_cap:
+        
+        # Market Position
+        if m_cap > 0:
             cap_factor = (m_cap / 1e11) + 0.5
             valid_scores["Market Position"] = min(int((100 + (volatility * 10)) * cap_factor), 200)
-
-        # 3. Financial Strength
+        
+        # Financial Strength
         if debt:
             debt_factor = max(0.5, 1.5 - (debt / 200))
             valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * debt_factor), 200)
-
-        # 4. Cashflow Quality
-        fcf_margin = fcf / (m_cap if m_cap > 0 else 1) # 時価総額比で代替
-        c_score = fcf_margin * 2000
-        valid_scores["Cashflow Quality"] = int(min(max(c_score, 0), 200))
-
-        # 5. People
+        
+        # Cashflow Quality
+        fcf_margin = fcf / (m_cap if m_cap > 0 else 1)
+        valid_scores["Cashflow Quality"] = int(min(max(fcf_margin * 2000, 0), 200))
+        
+        # People
         roe_score = min(max(roe * 100 * 10, 0), 200)
         eps_score = min(max(eps_growth * 100 * 20, 0), 200)
-        people_raw = (roe_score * 0.7) + (eps_score * 0.3)
-        valid_scores["People"] = int(min(people_raw, 200))
+        valid_scores["People"] = int(min((roe_score * 0.7) + (eps_score * 0.3), 200))
 
-        # --- 🚀 200点張り付き解消ロジック ---
+        # スケーリング調整
         AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
-        company_axes = {}
-        for k in AXES_LIST:
-            val = valid_scores.get(k)
-            if val is not None and val != 0:
-                company_axes[k] = int(min(val * 0.85, 195)) 
-            else:
-                company_axes[k] = 100
+        company_axes = {k: int(min(valid_scores.get(k, 100) * 0.85, 195)) for k in AXES_LIST}
         
-        total_score = int(sum(company_axes.values()))
-
         return {
             "axes": company_axes,
-            "total": total_score,
+            "total": int(sum(company_axes.values())),
             "name": name,
             "price_hist": hist_series,
             "current_price": last_price,
