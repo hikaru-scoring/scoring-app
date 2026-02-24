@@ -5,6 +5,9 @@ import streamlit as st
 
 @st.cache_data(ttl=43200)
 def fetch_data(symbol, name):
+    st.write("Test yfinance:")
+    test = yf.Ticker("D05.SI").history(period="1y")
+    st.write(test.tail())
     import requests
     import pandas as pd
     # 光さんの2つの武器（キー）
