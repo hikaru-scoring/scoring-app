@@ -26,6 +26,9 @@ def fetch_data(symbol, name):
         # CPIは前年比を出すために2年分（730日強）取得
         raw_cpi = fred.get_series(FRB_METRICS["CPI"], observation_start='2024-01-01')
         raw_expect = fred.get_series(FRB_METRICS["EXPECT"])
+        # --- [追加] Market Position 用のデータ取得 ---
+        raw_10y = fred.get_series(FRB_METRICS["GS10"])
+        raw_2y = fred.get_series("DGS2")
         
         # --- Future Focus ロジック計算 ---
         # ① 実体インフレ YoY の計算
@@ -41,28 +44,32 @@ def fetch_data(symbol, name):
         # 合算して Future Focus (200点満点)
         future_focus_score = int((cpi_score + expect_score) / 2)
 
+        # --- [Market Position] 2要素ロジック ---
+        # ① Stability (100点満点): 10年債の直近20日のボラが低いほど良い
+        yield_vol = raw_10y.diff().tail(20).std()
+        stability_score = max(0, 100 - (yield_vol * 500))
+        
+        # ② Curve (100点満点): 10Y - 2Y が正常（プラス）なら満点、逆イールドなら減点
+        curve_gap = raw_10y.iloc[-1] - raw_2y.iloc[-1]
+        curve_score = max(0, min(100, 100 + (curve_gap * 100)))
+        
+        market_pos_score = int(stability_score + curve_score)
+
+        # --------------------------------------------------
+        # スコア反映（ここを差し替え）
+        # --------------------------------------------------
+        company_axes = {
+            "Future Focus": future_focus_score,
+            "Market Position": market_pos_score, # 🚀 反映！
+            "Financial Strength": 100, 
+            "Cashflow Quality": 140,     
+            "People": 125                
+        }
+
         # --------------------------------------------------
         # ※現時点では他の軸は仮置き、もしくは既存の DGS10 等を使用
         # --------------------------------------------------
-        
-        # 暫定的な戻り値（Future Focus のみ反映）
-        company_axes = {
-            "Future Focus": future_focus_score,
-            "Market Position": 100,      # 次回設計
-            "Financial Strength": 100,   # 次回設計
-            "Cashflow Quality": 140,     # 次回設計
-            "People": 125                # 次回設計
-        }
-        
-        return {
-            "axes": company_axes,
-            "total": int(sum(company_axes.values())),
-            "name": "FRB Composite",
-            "price_hist": raw_expect.tail(1825), # 代表として期待インフレのチャートを表示
-            "current_price": expect_val,
-            "pe": "Macro",
-            "market_cap": 0
-        }
+
 
     except Exception as e:
         st.error(f"FRB Logic Error: {e}")
