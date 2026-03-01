@@ -18,7 +18,6 @@ def main():
     # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
     top_5 = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
-        {"name": "Gold (Inflation Hedge)", "symbol": "GC=F"},
         {"name": "Copper (Industrial)", "symbol": "HG=F"},
         {"name": "WTI Crude Oil", "symbol": "CL=F"},
         {"name": "Bitcoin (Digital Gold)", "symbol": "BTC-USD"}
