@@ -3,6 +3,7 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 
+@st.cache_data(ttl=86400)
 def fetch_data(symbol, name):
     import pandas as pd
     import streamlit as st
