@@ -91,20 +91,11 @@ def main():
             
 # 🚀 会社用のロジック解説（Peopleに復刻）
             logic_descriptions = {
-                "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
-                "Market Position": "Market Volatility × Market Capitalization",
-                "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
-                "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
-                "People": "Long-term Growth × Dividend Yield"
-            }
-            # 🚀 原油用のロジック解説 (data_logic.py の計算式に準拠)
-            oil_labels = ["Demand Forecast", "Geopolitical Risk", "Price Level Stress", "Supply Stability", "Market Heat Index"]
-            oil_descriptions = {
-                "Demand Forecast": "Price vs 1Y Average (Demand Strength Logic)",
-                "Geopolitical Risk": "Market Volatility × Risk Coefficient (15x)",
-                "Price Level Stress": "Distance from 1Y High (Overhead Resistance)",
-                "Supply Stability": "20-Day Rolling Volatility Stability Index",
-                "Market Heat Index": "Annual Growth Rate (Speculative Momentum)"
+                "Future Focus": "Inflation Control (CPI × Expectations)",
+                "Market Position": "Yield Stability × Curve Signal",
+                "Financial Strength": "Real Policy Ammo (Fed Funds – CPI)",
+                "Cashflow Quality": "Money Supply Balance (M2 YoY vs Ideal)",
+                "People": "Employment Equilibrium (Unemployment vs Natural Rate)"
             }
             
             # 指標カードの生成（25% Enlarged Version）
