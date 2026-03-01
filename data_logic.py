@@ -18,6 +18,12 @@ def fetch_data(symbol, name):
         "UNRATE": "UNRATE"   # 失業率
     }
 
+    # data_logic.py の 15行目付近に追加
+    MAS_RESOURCES = {
+        "SGS_YIELD": "9a05ad12-ace5-4231-9715-4fa2517a15ff",  # SGS利回り（10Y, 2Y等）
+        "M2": "5a676c8e-a912-45e0-b615-51543883a45c",         # マネーサプライ
+    }
+
     try:
         fred_key = st.secrets["FRED_API_KEY"]
         fred = Fred(api_key=fred_key)
@@ -99,4 +105,66 @@ def fetch_data(symbol, name):
 
     except Exception as e:
         st.error(f"FRB Logic Error: {e}")
+        return None
+
+# data_logic.py の一番最後に貼り付け
+@st.cache_data(ttl=86400)
+def fetch_mas_logic():
+    import requests
+    import pandas as pd
+    
+    headers = {"User-Agent": "Mozilla/5.0"}
+    
+    def get_mas(resource_id, limit=30):
+        url = f"https://eservices.mas.gov.sg/api/action/datastore/search.json?resource_id={resource_id}&limit={limit}&sort=end_of_day desc"
+        return requests.get(url, headers=headers).json()['result']['records']
+
+    try:
+        # 1. データ取得
+        sgs = get_mas(MAS_RESOURCES["SGS_YIELD"], 30)
+        m2_raw = get_mas(MAS_RESOURCES["M2"], 15)
+        
+        # 2. ロジック計算 (FRB版と同じ5軸)
+        
+        # [Market Dialogue] 10Y利回りの安定性とカーブ
+        yields_10y = [float(r['10_year_bond_yield']) for r in sgs]
+        yields_2y = [float(r['2_year_bond_yield']) for r in sgs]
+        vol_10y = pd.Series(yields_10y).diff().std()
+        
+        market_pos_score = int(max(0, 100 - (vol_10y * 500)) + max(0, min(100, 100 + (yields_10y[0] - yields_2y[0]) * 100)))
+
+        # [Monetary Balance] M2成長率の均衡 (理想4%)
+        m2_latest = float(m2_raw[0]['m2'])
+        m2_prev_year = float(m2_raw[12]['m2']) # 1年前
+        m2_yoy = ((m2_latest / m2_prev_year) - 1) * 100
+        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
+
+        # [Policy Optionality] 実質金利の余力
+        sora = float(sgs[0].get('overnight_interbank_rate', 3.0)) # 暫定SORA
+        fin_strength_score = int(max(0, min(200, (sora - 2.5) * 50))) # インフレ2.5%想定
+
+        # [Future & People] シンガポールは安定しているため一旦固定 or 簡易計算
+        future_focus_score = 170
+        people_score = 185
+
+        mas_axes = {
+            "Future Focus": future_focus_score,
+            "Market Position": market_pos_score,
+            "Financial Strength": fin_strength_score,
+            "Cashflow Quality": cashflow_score,
+            "People": people_score
+        }
+
+        return {
+            "axes": mas_axes,
+            "total": int(sum(mas_axes.values())),
+            "name": "MAS Composite (Singapore)",
+            "price_hist": pd.Series(yields_10y[::-1]), 
+            "current_price": yields_10y[0],
+            "pe": "Institutional",
+            "market_cap": 0
+        }
+
+    except Exception as e:
+        print(f"MAS Error: {e}")
         return None
