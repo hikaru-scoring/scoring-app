@@ -140,7 +140,7 @@ def main():
                 """, unsafe_allow_html=True)
 
         # 3. 下段：株価チャート
-        st.markdown("<div class='section-title'>V. Price Performance (5Y)</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>V. 10-Year Treasury Yield (5Y) Trend</div>", unsafe_allow_html=True)
         fig_p = go.Figure()
         if st.session_state.saved_data:
             s_data = st.session_state.saved_data
