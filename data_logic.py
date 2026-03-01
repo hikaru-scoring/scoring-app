@@ -8,33 +8,33 @@ def fetch_data(symbol, name):
     import yfinance as yf
     import streamlit as st
     
-    # 🏛️ 中央銀行シリーズIDの辞書管理
+    # 🏛️ 中央銀行・金利指標の管理（FREDを使用）
+    # シンボルが ^TNX (米国10年債利回り) の場合はFREDから取得する設定
     CENTRAL_BANK_SERIES = {
-        "SG10Y": "IRLTLT01SGM156N",  # シンガポール10年債 (Long-Term Government Bond Yields)
-        "^TNX": "DGS10",             # アメリカ10年債
+        "^TNX": "DGS10"
     }
 
     try:
         # 1. データ取得ルートの分岐
         if symbol in CENTRAL_BANK_SERIES:
             from fredapi import Fred
+            # StreamlitのSecretsからAPIキーを取得
             fred_key = st.secrets["FRED_API_KEY"]
             fred = Fred(api_key=fred_key)
             
             series_id = CENTRAL_BANK_SERIES[symbol]
-            # 🚀 指定したシリーズIDで取得を試みる
+            # FREDから米国10年債データを取得
             raw_series = fred.get_series(series_id)
             
             if raw_series.empty:
-                # 万が一空だった場合はエラーを出す
-                raise ValueError(f"Series {series_id} is empty")
+                return None
                 
             raw_series.index = pd.to_datetime(raw_series.index)
-            # データを日次に引き伸ばし、直近1年分を抽出
+            # データを日次に引き伸ばし、直近365日分を抽出
             hist_series = raw_series.resample('D').ffill().tail(365)
             
         else:
-            # コモディティ等は yfinance
+            # コモディティ（金・銅・原油）やビットコインは yfinance で取得
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period="1y")
             if hist.empty:
@@ -45,17 +45,20 @@ def fetch_data(symbol, name):
         last_price = float(hist_series.iloc[-1])
         avg_price = hist_series.mean()
         max_price = hist_series.max()
+        # ボラティリティ（価格変動の激しさ）を計算
         volatility = hist_series.pct_change().std() * 100
 
-        # 3. スコアリング計算（UI維持）
-        valid_scores = {}
-        valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100), 200)
-        valid_scores["Market Position"] = min(int(150 - (volatility * 10)), 200)
-        valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150), 200)
-        valid_scores["Cashflow Quality"] = 140
-        valid_scores["People"] = 125
+        # 3. マクロスコアリングロジック（思想の部分）
+        valid_scores = {
+            "Future Focus": min(int((last_price / avg_price) * 100), 200),
+            "Market Position": min(int(150 - (volatility * 10)), 200),
+            "Financial Strength": min(int((last_price / max_price) * 150), 200),
+            "Cashflow Quality": 140, # 流動性指標として固定
+            "People": 125           # 市場信頼度として固定
+        }
 
         AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+        # 全体のバランスを調整して195点満点に収める
         company_axes = {k: int(min(valid_scores.get(k, 100) * 0.85, 195)) for k in AXES_LIST}
         
         return {
@@ -68,8 +71,8 @@ def fetch_data(symbol, name):
             "market_cap": 0
         }
     except Exception as e:
-        st.write(f"🔥 ERROR ({symbol}):", e)
-        # 最終手段：エラーが出ても止まらないよう、アメリカ債をダミーで出すことも検討
+        # 予期せぬエラーが起きた場合は画面に表示してNoneを返す
+        st.error(f"Logic Error for {name}: {e}")
         return None
 # data_logic.py の末尾に追記
 
