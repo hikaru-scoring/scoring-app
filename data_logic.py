@@ -30,7 +30,8 @@ def fetch_data(symbol, name):
         raw_10y = fred.get_series(FRB_METRICS["GS10"])
         raw_2y = fred.get_series("DGS2")
         raw_m2 = fred.get_series("M2SL", observation_start='2023-01-01')
-        
+        raw_ff = fred.get_series(FRB_METRICS["FF"])
+
         # --- Future Focus ロジック計算 ---
         # ① 実体インフレ YoY の計算
         cpi_yoy = raw_cpi.pct_change(12).iloc[-1] * 100 # 12ヶ月前との比較(%)
@@ -60,7 +61,15 @@ def fetch_data(symbol, name):
         m2_yoy = raw_m2.pct_change(12).iloc[-1] * 100
         # 4.0%を理想とし、ズレるほど減点（4%ズレで100点減点）
         cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
+        # --- [Cashflow Quality] 通貨供給の均衡度 ---
+        m2_yoy = raw_m2.pct_change(12).iloc[-1] * 100
+        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
 
+        # --- [追加] Financial Strength 実質利下げ余力 ---
+        last_ff = raw_ff.iloc[-1]
+        real_rate = last_ff - cpi_yoy
+        # 実質金利が 4.0% で 200点満点、0%以下で 0点になる計算
+        fin_strength_score = int(max(0, min(200, real_rate * 50)))
         # --------------------------------------------------
         # スコア反映（最新版）
         # --------------------------------------------------
