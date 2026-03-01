@@ -95,7 +95,7 @@ def main():
                 "Market Position": "Yield Stability × Curve Signal",
                 "Financial Strength": "Real Policy Ammo (Fed Funds – CPI)",
                 "Cashflow Quality": "Money Supply Balance (M2 YoY vs Ideal)",
-                "People": "Employment Equilibrium (Unemployment vs Natural Rate)"
+                "People": "Employment Balance"
             }
             
             # 指標カードの生成（25% Enlarged Version）
