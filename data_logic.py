@@ -4,56 +4,53 @@ import yfinance as yf
 import streamlit as st
 
 def fetch_data(symbol, name):
-    import requests
     import pandas as pd
-    # 光さんの2つの武器（キー）
-    eod_key = st.secrets["EODHD_API_KEY"]
+    import yfinance as yf
+    import streamlit as st
     
-    symbol_tw = f"{symbol}" 
-
     try:
-        # 1. 【株価】Twelve Dataから取得（これは確実に取れます）
-        h_url = f"https://eodhistoricaldata.com/api/eod/{symbol}.SI?api_token={eod_key}&fmt=json"
-        h_res = requests.get(h_url, timeout=15).json()
-        st.write("DEBUG EOD RESPONSE:", h_res)
-        if not isinstance(h_res, list) or len(h_res) == 0:
-            return None
-        
-        # 2. 【財務データ】FMPの無料枠で限界まで挑戦！
-        # 比較的ロックがゆるい 'key-metrics-ttm' を狙います
-        m_data = {}
+        # 1. データ取得ルートの分岐（FRED vs yfinance）
+        if symbol == "SG10Y":
+            from fredapi import Fred
+            # 🚀 StreamlitのSecretsに保存したFREDのキーを呼び出す
+            fred_key = st.secrets["bd0ca525203b9393ffdaba745ee4dff9"]
+            fred = Fred(api_key=fred_key)
+            
+            # シンガポール長期金利の取得（FREDのID: IRLTLT01SGM156N）
+            raw_series = fred.get_series('IRLTLT01SGM156N')
+            raw_series.index = pd.to_datetime(raw_series.index)
+            # 月次データを日次に引き伸ばし、直近260日分（約1年分）を抽出してチャートを滑らかにする
+            hist_series = raw_series.resample('D').ffill().tail(260)
+            
+        else:
+            # その他マクロ資産（金、銅、米10年債など）は yfinance で取得
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(period="1y")
+            if hist.empty:
+                return None
+            hist_series = hist['Close']
 
-        # 3. データの成形（Twelve Data用）
-        df = pd.DataFrame(h_res)
-        df["close"] = pd.to_numeric(df["close"], errors="coerce")
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        hist_series = df.dropna(subset=["date","close"]).set_index("date")["close"].sort_index()
-        st.write("DEBUG HIST LENGTH:", len(hist_series))
-
-        # 各種数値の抽出（データがなければ0や1.0を代入して計算停止を防ぐ）
+        # 2. 共通の計算準備
         last_price = float(hist_series.iloc[-1])
         avg_price = hist_series.mean()
         max_price = hist_series.max()
         volatility = hist_series.pct_change().std() * 100
-        
-        # --- ここがチャレンジ箇所！本物のデータを狙う ---
-        per = m_data.get("peRatioTTM")
-        roe = m_data.get("roeTTM")
-        debt = m_data.get("debtEquityRatioTTM")
-        fcf_yield = m_data.get("freeCashFlowYieldTTM")
 
-        # --- 4. スコア計算（データがある時だけ反映、なければ安全な値で計算） ---
+        # 3. マクロスコアリング計算（UIを崩さないため、キー名は株用を維持）
         valid_scores = {}
-        # 将来性 (PERがあれば反映)
-        valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * (max(0.5, 1.5 - (per / 40)) if per else 1.0)), 200)
-        # 市場性
-        valid_scores["Market Position"] = min(int(100 + (volatility * 10)), 200)
-        # 財務健全性 (負債比率があれば反映)
-        valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * (max(0.5, 1.5 - (debt / 2)) if debt else 1.0)), 200)
-        # キャッシュフロー (FCF利回りがあれば反映)
-        valid_scores["Cashflow Quality"] = int(min(max(fcf_yield * 1000, 0), 200)) if fcf_yield else 120
-        # 人材・経営 (ROEがあれば反映)
-        valid_scores["People"] = int(min(roe * 500, 200)) if roe else 100
+        
+        # 将来性 (マクロのMomentumとして計算)
+        valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100), 200)
+        
+        # 市場性 (マクロのStabilityとして計算：ボラティリティが低いほど高得点)
+        valid_scores["Market Position"] = min(int(150 - (volatility * 10)), 200)
+        
+        # 財務健全性 (マクロのPotentialとして計算)
+        valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150), 200)
+        
+        # キャッシュフロー & 人材 (マクロ向けの固定ベーススコア + 変動)
+        valid_scores["Cashflow Quality"] = 140
+        valid_scores["People"] = 125
 
         AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
         company_axes = {k: int(min(valid_scores.get(k, 100) * 0.85, 195)) for k in AXES_LIST}
@@ -64,10 +61,11 @@ def fetch_data(symbol, name):
             "name": name,
             "price_hist": hist_series,
             "current_price": last_price,
-            "pe": per if per else "N/A",
+            "pe": "Macro",
             "market_cap": 0
         }
-    except Exception:
+    except Exception as e:
+        st.write("🔥 ERROR INSIDE FETCH:", e)
         return None
 # data_logic.py の末尾に追記
 
