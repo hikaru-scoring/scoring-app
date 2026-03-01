@@ -38,18 +38,32 @@ def main():
     save_it = c1.button("💾 SAVE COMPANY")
     clear_it = c2.button("🗑️ CLEAR")
     compare_oil = c3.button("🛢️ COMPARE WITH OIL")
-
-    # 2. メイン銘柄のデータ取得
-    # 2. メインデータの取得（ここを丸ごと入れ替え）
+    
+    # 2. メインデータの取得（デバッグ版に差し替え）
     try:
         if symbol == "MAS":
             from data_logic import fetch_mas_logic
             data = fetch_mas_logic()
+            
+            # 🔴 もし表示されない（Noneが返る）場合、原因を画面に出す
+            if data is None:
+                st.warning("⚠️ MAS data logic failed. Diagnostic mode activated.")
+                import requests
+                # MAS_RESOURCESはdata_logicから直接インポート
+                from data_logic import MAS_RESOURCES
+                
+                # 生データを1件だけ取って構造を確認する
+                test_url = f"https://eservices.mas.gov.sg/api/action/datastore/search.json?resource_id={MAS_RESOURCES['SGS_YIELD']}&limit=1"
+                raw_res = requests.get(test_url).json()
+                
+                st.write("--- [API DEBUG INFO] ---")
+                st.write("Target URL:", test_url)
+                st.json(raw_res) # 👈 これでJSONの中身が画面に表示されます
         else:
             data = fetch_data(symbol, name)
             
     except Exception as e:
-        st.error(f"ERROR: {e}")
+        st.error(f"Logic Error: {e}")
         st.stop()
 
     if data:
