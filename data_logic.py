@@ -13,7 +13,7 @@ def fetch_data(symbol, name):
         if symbol == "SG10Y":
             from fredapi import Fred
             # 🚀 StreamlitのSecretsに保存したFREDのキーを呼び出す
-            fred_key = st.secrets["bd0ca525203b9393ffdaba745ee4dff9"]
+            fred_key = st.secrets["FRED_API_KEY"]
             fred = Fred(api_key=fred_key)
             
             # シンガポール長期金利の取得（FREDのID: IRLTLT01SGM156N）
