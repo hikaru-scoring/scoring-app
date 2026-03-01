@@ -8,23 +8,33 @@ def fetch_data(symbol, name):
     import yfinance as yf
     import streamlit as st
     
+    # 🏛️ 中央銀行シリーズIDの辞書管理
+    CENTRAL_BANK_SERIES = {
+        "SG10Y": "IRLTLT01SGM156N",  # シンガポール10年債 (Long-Term Government Bond Yields)
+        "^TNX": "DGS10",             # アメリカ10年債
+    }
+
     try:
-        # 1. データ取得ルートの分岐（FRED vs yfinance）
-        if symbol == "SG10Y":
+        # 1. データ取得ルートの分岐
+        if symbol in CENTRAL_BANK_SERIES:
             from fredapi import Fred
-            # 🚀 StreamlitのSecretsに保存したFREDのキーを呼び出す
             fred_key = st.secrets["FRED_API_KEY"]
             fred = Fred(api_key=fred_key)
             
-            # シンガポール長期金利の取得（FREDのID: IRLTLT01SGM156N）
-            # 🚀 シンガポール10年債の最新IDに修正
-            raw_series = fred.get_series('INTGSTSG10Y')
+            series_id = CENTRAL_BANK_SERIES[symbol]
+            # 🚀 指定したシリーズIDで取得を試みる
+            raw_series = fred.get_series(series_id)
+            
+            if raw_series.empty:
+                # 万が一空だった場合はエラーを出す
+                raise ValueError(f"Series {series_id} is empty")
+                
             raw_series.index = pd.to_datetime(raw_series.index)
-            # 月次データを日次に引き伸ばし、直近260日分（約1年分）を抽出してチャートを滑らかにする
-            hist_series = raw_series.resample('D').ffill().tail(260)
+            # データを日次に引き伸ばし、直近1年分を抽出
+            hist_series = raw_series.resample('D').ffill().tail(365)
             
         else:
-            # その他マクロ資産（金、銅、米10年債など）は yfinance で取得
+            # コモディティ等は yfinance
             ticker = yf.Ticker(symbol)
             hist = ticker.history(period="1y")
             if hist.empty:
@@ -37,19 +47,11 @@ def fetch_data(symbol, name):
         max_price = hist_series.max()
         volatility = hist_series.pct_change().std() * 100
 
-        # 3. マクロスコアリング計算（UIを崩さないため、キー名は株用を維持）
+        # 3. スコアリング計算（UI維持）
         valid_scores = {}
-        
-        # 将来性 (マクロのMomentumとして計算)
         valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100), 200)
-        
-        # 市場性 (マクロのStabilityとして計算：ボラティリティが低いほど高得点)
         valid_scores["Market Position"] = min(int(150 - (volatility * 10)), 200)
-        
-        # 財務健全性 (マクロのPotentialとして計算)
         valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150), 200)
-        
-        # キャッシュフロー & 人材 (マクロ向けの固定ベーススコア + 変動)
         valid_scores["Cashflow Quality"] = 140
         valid_scores["People"] = 125
 
@@ -66,7 +68,8 @@ def fetch_data(symbol, name):
             "market_cap": 0
         }
     except Exception as e:
-        st.write("🔥 ERROR INSIDE FETCH:", e)
+        st.write(f"🔥 ERROR ({symbol}):", e)
+        # 最終手段：エラーが出ても止まらないよう、アメリカ債をダミーで出すことも検討
         return None
 # data_logic.py の末尾に追記
 
