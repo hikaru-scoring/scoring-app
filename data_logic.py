@@ -29,6 +29,7 @@ def fetch_data(symbol, name):
         # --- [追加] Market Position 用のデータ取得 ---
         raw_10y = fred.get_series(FRB_METRICS["GS10"])
         raw_2y = fred.get_series("DGS2")
+        raw_m2 = fred.get_series("M2SL", observation_start='2023-01-01')
         
         # --- Future Focus ロジック計算 ---
         # ① 実体インフレ YoY の計算
@@ -55,29 +56,25 @@ def fetch_data(symbol, name):
         
         market_pos_score = int(stability_score + curve_score)
 
+        # --- [Cashflow Quality] 通貨供給の均衡度 ---
+        m2_yoy = raw_m2.pct_change(12).iloc[-1] * 100
+        # 4.0%を理想とし、ズレるほど減点（4%ズレで100点減点）
+        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
+
         # --------------------------------------------------
-        # スコア反映（ここを差し替え）
+        # スコア反映（最新版）
         # --------------------------------------------------
         company_axes = {
             "Future Focus": future_focus_score,
-            "Market Position": market_pos_score, # 🚀 反映！
-            "Financial Strength": 100, 
-            "Cashflow Quality": 140,     
-            "People": 125                
+            "Market Position": market_pos_score,
+            "Financial Strength": fin_strength_score,
+            "Cashflow Quality": cashflow_score, # 🚀 通貨均衡スコアを反映！
+            "People": 125 
         }
 
         # --------------------------------------------------
         # ※現時点では他の軸は仮置き、もしくは既存の DGS10 等を使用
         # --------------------------------------------------
-        
-        # 暫定的な戻り値（Future Focus のみ反映）
-        company_axes = {
-            "Future Focus": future_focus_score,
-            "Market Position": 100,      # 次回設計
-            "Financial Strength": 100,   # 次回設計
-            "Cashflow Quality": 140,     # 次回設計
-            "People": 125                # 次回設計
-        }
         
         return {
             "axes": company_axes,
