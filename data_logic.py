@@ -117,47 +117,56 @@ def fetch_data(symbol, name):
 def fetch_mas_logic():
     import requests
     import pandas as pd
+    import streamlit as st
     
     headers = {"User-Agent": "Mozilla/5.0"}
     
-    # MASのサーバーからデータを取ってくるための補助関数
     def get_mas(resource_id, limit=30):
         url = f"https://eservices.mas.gov.sg/api/action/datastore/search.json?resource_id={resource_id}&limit={limit}&sort=end_of_day desc"
         res = requests.get(url, headers=headers).json()
         return res['result']['records']
 
     try:
-        # ステップ1で外に出した「MAS_RESOURCES」をここで使います
+        # 1. データ取得
         sgs = get_mas(MAS_RESOURCES["SGS_YIELD"], 30)
         m2_raw = get_mas(MAS_RESOURCES["M2"], 15)
+
+        # 🔴 【デバッグ表示】ここで中身を強制的に画面に出す
+        st.write("--- MAS RAW DATA CHECK ---")
+        st.write("SGS Sample Keys:", list(sgs[0].keys()))
+        st.write("M2 Sample Keys:", list(m2_raw[0].keys()))
+
+        # 2. キーの動的特定（名前が微妙に違っても探す）
+        # 10年債利回りを探す
+        k_10y = next((k for k in sgs[0].keys() if '10_year' in k.lower() or '10-year' in k.lower()), None)
+        k_2y = next((k for k in sgs[0].keys() if '2_year' in k.lower() or '2-year' in k.lower()), None)
+        k_m2 = next((k for k in m2_raw[0].keys() if 'm2' in k.lower()), None)
+
+        if not k_10y or not k_m2:
+            st.error(f"Field names not found. Available: {list(sgs[0].keys())}")
+            return None
+
+        # 3. ロジック計算
+        yields_10y = [float(r[k_10y]) for r in sgs if r[k_10y] is not None]
+        yields_2y = [float(r[k_2y]) for r in sgs if r[k_2y] is not None]
         
-        # --- ここから計算ロジック ---
-        # 10年債利回りの安定性
-        yields_10y = [float(r['10_year_bond_yield']) for r in sgs]
-        yields_2y = [float(r['2_year_bond_yield']) for r in sgs]
+        # [Market Dialogue]
         vol_10y = pd.Series(yields_10y).diff().std()
         market_pos_score = int(max(0, 100 - (vol_10y * 500)) + max(0, min(100, 100 + (yields_10y[0] - yields_2y[0]) * 100)))
 
-        # マネーサプライM2の伸び率
-        m2_latest = float(m2_raw[0]['m2'])
-        m2_prev_year = float(m2_raw[12]['m2'])
+        # [Monetary Balance]
+        m2_latest = float(m2_raw[0][k_m2])
+        m2_prev_year = float(m2_raw[-1][k_m2]) # 取得した中で一番古いデータと比較
         m2_yoy = ((m2_latest / m2_prev_year) - 1) * 100
         cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
 
-        # 金利の余力
-        sora = float(sgs[0].get('overnight_interbank_rate', 3.0))
-        fin_strength_score = int(max(0, min(200, (sora - 2.5) * 50)))
-
-        # その他（固定値）
-        future_focus_score = 170
-        people_score = 185
-
+        # 残りのスコアは一旦シンガポール基準で固定
         mas_axes = {
-            "Future Focus": future_focus_score,
+            "Future Focus": 175,
             "Market Position": market_pos_score,
-            "Financial Strength": fin_strength_score,
+            "Financial Strength": 160,
             "Cashflow Quality": cashflow_score,
-            "People": people_score
+            "People": 185
         }
 
         return {
@@ -171,6 +180,5 @@ def fetch_mas_logic():
         }
 
     except Exception as e:
-        # 何かエラーが出たらここに表示される
-        print(f"MAS Error: {e}")
+        st.error(f"MAS Logic Error: {e}")
         return None
