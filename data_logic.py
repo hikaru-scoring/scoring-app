@@ -31,38 +31,12 @@ def fetch_data(symbol, name):
         # チャート表示用に5年分 (1825日)
         hist_series = raw_series.resample('D').ffill().tail(1825)
 
-    try:
-        # 1. データ取得ルートの分岐
-        if symbol in CENTRAL_BANK_SERIES:
-            from fredapi import Fred
-            # StreamlitのSecretsからAPIキーを取得
-            fred_key = st.secrets["FRED_API_KEY"]
-            fred = Fred(api_key=fred_key)
-            
-            series_id = CENTRAL_BANK_SERIES[symbol]
-            # FREDから米国10年債データを取得
-            raw_series = fred.get_series(series_id)
-            
-            if raw_series.empty:
-                return None
-                
-            raw_series.index = pd.to_datetime(raw_series.index)
-            # データを日次に引き伸ばし、直近365日分を抽出
-            hist_series = raw_series.resample('D').ffill().tail(1825)
-
         # 2. 共通の計算準備（計算は直近1年 365日の値を使用）
         calc_series = hist_series.tail(365)
         last_price = float(calc_series.iloc[-1])
         avg_price = calc_series.mean()
         max_price = calc_series.max()
         volatility = calc_series.pct_change().std() * 100    
-        else:
-            # コモディティ（金・銅・原油）やビットコインは yfinance で取得
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(period="1y")
-            if hist.empty:
-                return None
-            hist_series = hist['Close']
 
         # 2. 共通の計算準備
         last_price = float(hist_series.iloc[-1])
