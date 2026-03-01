@@ -15,13 +15,13 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
-    # --- 🚀 厳選5銘柄固定ロジック（マクロ・コモディティ版に変更） ---
+    # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
     top_5 = [
-        {"name": "Singapore 10Y Yield", "symbol": "SG10Y"},
         {"name": "US 10Y Yield", "symbol": "^TNX"},
         {"name": "Gold (Inflation Hedge)", "symbol": "GC=F"},
         {"name": "Copper (Industrial)", "symbol": "HG=F"},
-        {"name": "WTI Crude Oil", "symbol": "CL=F"}
+        {"name": "WTI Crude Oil", "symbol": "CL=F"},
+        {"name": "Bitcoin (Digital Gold)", "symbol": "BTC-USD"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
