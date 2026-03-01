@@ -12,7 +12,6 @@ def fetch_data(symbol, name):
     # 🏛️ すべて公式の FRED シリーズIDで管理（yfinanceは不使用）
     FRED_SERIES_MAP = {
         "^TNX": "DGS10",            # 米国10年債
-        "GC=F": "GOLDPMGBD228NLBM", # 金
         "HG=F": "PCOPPUSDM",        # 銅
         "CL=F": "DCOILWTICO",       # 原油
         "BTC-USD": "CBBTCUSD"       # ビットコイン
