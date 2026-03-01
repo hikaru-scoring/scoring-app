@@ -17,7 +17,8 @@ def fetch_data(symbol, name):
             fred = Fred(api_key=fred_key)
             
             # シンガポール長期金利の取得（FREDのID: IRLTLT01SGM156N）
-            raw_series = fred.get_series('IRLTLT01SGM156N')
+            # 🚀 シンガポール10年債の最新IDに修正
+            raw_series = fred.get_series('INTGSTSG10Y')
             raw_series.index = pd.to_datetime(raw_series.index)
             # 月次データを日次に引き伸ばし、直近260日分（約1年分）を抽出してチャートを滑らかにする
             hist_series = raw_series.resample('D').ffill().tail(260)
