@@ -18,6 +18,7 @@ def main():
     # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
     top_5 = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
+        {"name": "MAS Composite (SG)", "symbol": "MAS"},
         {"name": "Copper (Industrial)", "symbol": "HG=F"},
         {"name": "WTI Crude Oil", "symbol": "CL=F"},
         {"name": "Bitcoin (Digital Gold)", "symbol": "BTC-USD"}
@@ -39,8 +40,14 @@ def main():
     compare_oil = c3.button("🛢️ COMPARE WITH OIL")
 
     # 2. メイン銘柄のデータ取得
+    # 2. メインデータの取得（ここを丸ごと入れ替え）
     try:
-        data = fetch_data(symbol, name)
+        if symbol == "MAS":
+            from data_logic import fetch_mas_logic
+            data = fetch_mas_logic()
+        else:
+            data = fetch_data(symbol, name)
+            
     except Exception as e:
         st.error(f"ERROR: {e}")
         st.stop()
