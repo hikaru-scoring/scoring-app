@@ -69,7 +69,25 @@ def fetch_data(symbol, name):
         # --------------------------------------------------
         # ※現時点では他の軸は仮置き、もしくは既存の DGS10 等を使用
         # --------------------------------------------------
-
+        
+        # 暫定的な戻り値（Future Focus のみ反映）
+        company_axes = {
+            "Future Focus": future_focus_score,
+            "Market Position": 100,      # 次回設計
+            "Financial Strength": 100,   # 次回設計
+            "Cashflow Quality": 140,     # 次回設計
+            "People": 125                # 次回設計
+        }
+        
+        return {
+            "axes": company_axes,
+            "total": int(sum(company_axes.values())),
+            "name": "FRB Composite",
+            "price_hist": raw_expect.tail(1825), # 代表として期待インフレのチャートを表示
+            "current_price": expect_val,
+            "pe": "Macro",
+            "market_cap": 0
+        }
 
     except Exception as e:
         st.error(f"FRB Logic Error: {e}")
