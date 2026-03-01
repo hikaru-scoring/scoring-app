@@ -31,6 +31,8 @@ def fetch_data(symbol, name):
         raw_2y = fred.get_series("DGS2")
         raw_m2 = fred.get_series("M2SL", observation_start='2023-01-01')
         raw_ff = fred.get_series(FRB_METRICS["FF"])
+        # --- [追加] People 用の失業率 ---
+        raw_unrate = fred.get_series(FRB_METRICS["UNRATE"])
 
         # --- Future Focus ロジック計算 ---
         # ① 実体インフレ YoY の計算
@@ -60,30 +62,30 @@ def fetch_data(symbol, name):
         # --- [Cashflow Quality] 通貨供給の均衡度 ---
         m2_yoy = raw_m2.pct_change(12).iloc[-1] * 100
         # 4.0%を理想とし、ズレるほど減点（4%ズレで100点減点）
-        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
-        # --- [Cashflow Quality] 通貨供給の均衡度 ---
-        m2_yoy = raw_m2.pct_change(12).iloc[-1] * 100
-        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
+        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 30))
 
         # --- [追加] Financial Strength 実質利下げ余力 ---
         last_ff = raw_ff.iloc[-1]
         real_rate = last_ff - cpi_yoy
         # 実質金利が 4.0% で 200点満点、0%以下で 0点になる計算
         fin_strength_score = int(max(0, min(200, real_rate * 50)))
+
+        # --- [People] 雇用の均衡度 ---
+        last_unrate = raw_unrate.iloc[-1]
+        # 4.0% を理想とし、そこからズレるほど減点（係数40で現実的な変動に対応）
+        people_score = int(max(0, 200 - abs(last_unrate - 4.0) * 40))
+
         # --------------------------------------------------
-        # スコア反映（最新版）
+        # スコア反映（ついに全5軸が完成！）
         # --------------------------------------------------
         company_axes = {
             "Future Focus": future_focus_score,
             "Market Position": market_pos_score,
             "Financial Strength": fin_strength_score,
-            "Cashflow Quality": cashflow_score, # 🚀 通貨均衡スコアを反映！
-            "People": 125 
+            "Cashflow Quality": cashflow_score,
+            "People": people_score 
         }
-
-        # --------------------------------------------------
-        # ※現時点では他の軸は仮置き、もしくは既存の DGS10 等を使用
-        # --------------------------------------------------
+# --------------------------------------------------
         
         return {
             "axes": company_axes,
