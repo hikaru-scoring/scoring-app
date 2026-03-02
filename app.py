@@ -18,10 +18,8 @@ def main():
     # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
     top_5 = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
-        {"name": "MAS Composite (SG)", "symbol": "MAS"},
         {"name": "Copper (Industrial)", "symbol": "HG=F"},
         {"name": "WTI Crude Oil", "symbol": "CL=F"},
-        {"name": "Bitcoin (Digital Gold)", "symbol": "BTC-USD"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
