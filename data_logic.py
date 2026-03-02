@@ -46,8 +46,8 @@ def fetch_data(symbol, name):
     }
 
     try:
-        # --- 🚀 ここから割り込み ---
         if any(x in name for x in ["Copper", "Oil", "WTI", "Bitcoin"]):
+            # (中身は今のまま)
             code = "hg.f" if "Copper" in name else ("cl.f" if "Oil" in name or "WTI" in name else "btc.v")
             url = f"https://stooq.com/q/d/l/?s={code}&i=d"
             df = pd.read_csv(url)
