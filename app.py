@@ -15,11 +15,13 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
-    # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
+    # --- 🚀 厳選5銘柄固定ロジック（ここを完全に置き換え） ---
     top_5 = [
-        {"name": "US 10Y Yield", "symbol": "^TNX"},
-        {"name": "Copper (Industrial)", "symbol": "HG=F"},
-        {"name": "WTI Crude Oil", "symbol": "CL=F"},
+        {"name": "DBS Group", "symbol": "D05"},
+        {"name": "Singtel", "symbol": "Z74"},
+        {"name": "OCBC Bank", "symbol": "O39"},
+        {"name": "Keppel Ltd", "symbol": "BN4"},
+        {"name": "CapitaLand Investment", "symbol": "9CI"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
@@ -37,18 +39,28 @@ def main():
     clear_it = c2.button("🗑️ CLEAR")
     compare_oil = c3.button("🛢️ COMPARE WITH OIL")
 
-    # 1. 総合点数（中央上部）
+    # 2. メイン銘柄のデータ取得
+    data = fetch_data(symbol, name)
+
+    if data:
+        # 3. ボタンごとの動作設定
+        if save_it: 
+            st.session_state.saved_data = data
+            st.rerun()
+        if clear_it: 
+            st.session_state.saved_data = None
+            st.rerun()
+        if compare_oil:
+            # data_logic.pyから原油データを呼んでくる
+            from data_logic import fetch_oil_data 
+            st.session_state.saved_data = fetch_oil_data()
+            st.rerun()
+
+        # 1. 総合点数（中央上部）
         source = st.session_state.saved_data if st.session_state.saved_data else data
         display_total = int(data.get("total", 0))
 
-        st.markdown(f"""
-            <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
-                <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
-                <div class="total-score-val">{display_total} <span style="font-size:30px; color:#DDD;">/ 1000</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    # --- 🚀 2. 総合点数の表示（元のシンプルなデザインに復元） ---
+        # 1. 総合点数（中央上部）
         st.markdown(f"""
             <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
                 <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
@@ -56,27 +68,55 @@ def main():
             </div>
         """, unsafe_allow_html=True)
 
-        # --- 🚀 3. レーダーチャート（左）と詳細カード（右） ---
+        # 2. 中段：レーダーチャート（左）と DNA点数（右）
         col_left, col_right = st.columns([1.8, 1])
 
         with col_left:
+            # タイトルの上下余白を極限まで詰める
             st.markdown("<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>", unsafe_allow_html=True)
-            fig_r = render_radar_chart(data, st.session_state.saved_data, current_axes)
+            fig_r = render_radar_chart(data, st.session_state.saved_data, AXES)
             st.plotly_chart(fig_r, use_container_width=True)
 
         with col_right:
+            # 右側のタイトルも左に合わせて上に寄せる
             st.markdown("<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>", unsafe_allow_html=True)
             
-            for i, k in enumerate(current_axes):
-                v1 = data["axes"].get(k, 0)
-                v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None
+            # 表示ソースの確定
+            source = st.session_state.saved_data if st.session_state.saved_data else data
+            is_oil = source.get('name') == "WTI CRUDE OIL"
+            
+            
+# 🚀 会社用のロジック解説（Peopleに復刻）
+            logic_descriptions = {
+                "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
+                "Market Position": "Market Volatility × Market Capitalization",
+                "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
+                "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
+                "People": "Long-term Growth × Dividend Yield"
+            }
+            # 🚀 原油用のロジック解説 (data_logic.py の計算式に準拠)
+            oil_labels = ["Demand Forecast", "Geopolitical Risk", "Price Level Stress", "Supply Stability", "Market Heat Index"]
+            oil_descriptions = {
+                "Demand Forecast": "Price vs 1Y Average (Demand Strength Logic)",
+                "Geopolitical Risk": "Market Volatility × Risk Coefficient (15x)",
+                "Price Level Stress": "Distance from 1Y High (Overhead Resistance)",
+                "Supply Stability": "20-Day Rolling Volatility Stability Index",
+                "Market Heat Index": "Annual Growth Rate (Speculative Momentum)"
+            }
+            
+            # 指標カードの生成（25% Enlarged Version）
+            for i, k in enumerate(AXES):
+                v1 = data["axes"].get(k, 0)  # 現在の資産（青）
+                v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None # 保存済み（オレンジ）
                 
-                # スコア表示（②のサイズ：1.7em / 0.9em）
+                display_label = oil_labels[i] if is_oil else k
+                desc_text = oil_descriptions.get(display_label, "") if is_oil else logic_descriptions.get(k, "")
+                
+                # スコア表示のHTML（フォントサイズを25%アップ: 1.3em -> 1.7em / 0.7em -> 0.9em）
                 score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
                 if v2 is not None:
                     score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
 
-                # 🎯 ②のUI（余白20px, 影あり, フォント1.2em / 0.95em）を完全再現
                 st.markdown(f"""
                     <div style="
                         background-color: #FFFFFF; 
@@ -88,42 +128,15 @@ def main():
                         box-shadow: 2px 2px 5px rgba(0,0,0,0.07);
                     ">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-size: 1.2em; font-weight: 800; color: #333333;">{k}</span>
+                            <span style="font-size: 1.2em; font-weight: 800; color: #333333;">{display_label}</span>
                             <span style="font-size: 1.7em; font-weight: 900; line-height: 1;">{score_html}</span>
                         </div>
-                        <p style="font-size: 0.95em; color: #777777; margin: 0; line-height: 1.3; font-weight: 500;">{descriptions.get(k, "")}</p>
-                    </div>
-                """, unsafe_allow_html=True)
-
-        # --- 🚀 3. レーダーチャート（左）と詳細カード（右） ---
-        col_left, col_right = st.columns([1.8, 1])
-
-        with col_left:
-            st.markdown("<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>", unsafe_allow_html=True)
-            # 自動決定した current_axes を使用
-            fig_r = render_radar_chart(data, st.session_state.saved_data, current_axes)
-            st.plotly_chart(fig_r, use_container_width=True)
-
-        with col_right:
-            st.markdown("<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>", unsafe_allow_html=True)
-            for k in current_axes:
-                v1 = data["axes"].get(k, 0)
-                v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None
-                score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
-                if v2 is not None: score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
-
-                st.markdown(f"""
-                    <div style="background-color: #FFFFFF; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #E0E0E0; border-left: 8px solid #2E7BE6;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                            <span style="font-size: 1.1em; font-weight: 800; color: #333333;">{k}</span>
-                            <span style="font-size: 1.5em; font-weight: 900; line-height: 1;">{score_html}</span>
-                        </div>
-                        <p style="font-size: 0.85em; color: #777777; margin: 0; line-height: 1.2;">{descriptions.get(k, "")}</p>
+                        <p style="font-size: 0.95em; color: #777777; margin: 0; line-height: 1.3; font-weight: 500;">{desc_text}</p>
                     </div>
                 """, unsafe_allow_html=True)
 
         # 3. 下段：株価チャート
-        st.markdown("<div class='section-title'>V. 10-Year Treasury Yield (5Y) Trend</div>", unsafe_allow_html=True)
+        st.markdown("<div class='section-title'>V. Price Performance (5Y)</div>", unsafe_allow_html=True)
         fig_p = go.Figure()
         if st.session_state.saved_data:
             s_data = st.session_state.saved_data
@@ -200,17 +213,11 @@ def main():
     </p>
 </div>
 </div>
-""", unsafe_allow_html=True)
 
-        # 🚀 本物のリンクボタン（ここだけPythonのコードとして書く）
-        st.link_button(
-            "SECURE YOUR SLOT NOW", 
-            "https://square.link/u/s2z4dwRO",
-            use_container_width=True,
-            type="primary"
-        )
+<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">
+Secure Your Slot Now
+</div>
 
-        st.markdown("""
 <div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
     <strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. While we strive for accuracy, we do not guarantee the completeness or reliability of the data provided. All investment decisions should be made at the user's own discretion and risk. We shall not be held liable for any loss or damage arising from the use of this service.
 </div>
@@ -223,5 +230,4 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
 # 💡 ここからは if data: ブロックの外側。一番左に配置
 if __name__ == "__main__":
-
     main()
