@@ -8,6 +8,22 @@ MAS_RESOURCES = {
     "M2": "5a676c8e-a912-45e0-b615-51543883a45c",
 }
 
+# --- [追加：コモディティ用計算ロジック] ---
+def calculate_commodity_scores(name, hist):
+    """銅や原油の価格データ(hist)から5軸スコアを算出"""
+    # 騰落率(20日)とボラティリティ
+    ret = hist.pct_change(20).iloc[-1] if len(hist) > 20 else 0
+    vol = hist.pct_change().std() if len(hist) > 20 else 0.02
+    
+    axes = {
+        "Industrial Demand": int(max(0, min(200, 100 + (ret * 1000)))),
+        "Supply Chain": int(max(0, min(200, 150 - (vol * 5000)))),
+        "Global Inventory": 165, # 暫定
+        "Price Volatility": int(max(0, min(200, 200 - (vol * 8000)))),
+        "Macro Hedge": 180
+    }
+    return axes, sum(axes.values())
+
 @st.cache_data(ttl=86400)
 def fetch_data(symbol, name):
     import pandas as pd
@@ -30,6 +46,24 @@ def fetch_data(symbol, name):
     }
 
     try:
+        try:
+        # --- 🚀 ここから割り込み ---
+        if any(x in name for x in ["Copper", "Oil", "WTI", "Bitcoin"]):
+            code = "hg.f" if "Copper" in name else ("cl.f" if "Oil" in name or "WTI" in name else "btc.v")
+            url = f"https://stooq.com/q/d/l/?s={code}&i=d"
+            df = pd.read_csv(url)
+            df['Date'] = pd.to_datetime(df['Date'])
+            hist = df.set_index('Date').sort_index()['Close']
+            
+            axes, total = calculate_commodity_scores(name, hist)
+            return {
+                "axes": axes, "total": int(total), "name": name,
+                "price_hist": hist, "current_price": float(hist.iloc[-1]),
+                "pe": "Commodity", "market_cap": 0
+            }
+        # --- ここまで割り込み ---
+
+        # 以下、既存の米国債用 FRED ロジック
         fred_key = st.secrets["FRED_API_KEY"]
         fred = Fred(api_key=fred_key)
 
