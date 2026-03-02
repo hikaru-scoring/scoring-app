@@ -53,6 +53,10 @@ def main():
             st.rerun()
 
         # 1. 総合点数（中央上部）
+        source = st.session_state.saved_data if st.session_state.saved_data else data
+        display_total = int(data.get("total", 0))
+
+        # 1. 総合点数（中央上部）
         st.markdown(f"""
             <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
                 <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
