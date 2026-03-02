@@ -119,50 +119,47 @@ def fetch_mas_logic():
     import pandas as pd
     import streamlit as st
     
-    headers = {"User-Agent": "Mozilla/5.0"}
-    
-    def get_mas(resource_id, limit=30):
-        url = f"https://eservices.mas.gov.sg/api/action/datastore/search.json?resource_id={resource_id}&limit={limit}&sort=end_of_day desc"
-        res = requests.get(url, headers=headers).json()
-        return res['result']['records']
+    # 🎯 v2 Dataset IDs
+    SGS_ID = "d_91724f72836261541f5343f8e5b4e073"
+    M2_ID = "d_5391f6e2469446e9df5370d97371101e"
+
+    def get_mas_v2(dataset_id):
+        url = f"https://api.data.gov.sg/v2/public/api/datasets/{dataset_id}/data"
+        res = requests.get(url, timeout=10)
+        if res.status_code == 200:
+            # v2の構造に合わせて抽出
+            return res.json()["data"]["records"]
+        return None
 
     try:
-        # 1. データ取得
-        sgs = get_mas(MAS_RESOURCES["SGS_YIELD"], 30)
-        m2_raw = get_mas(MAS_RESOURCES["M2"], 15)
+        sgs_records = get_mas_v2(SGS_ID)
+        m2_records = get_mas_v2(M2_ID)
 
-        # 🔴 【デバッグ表示】ここで中身を強制的に画面に出す
-        st.write("--- MAS RAW DATA CHECK ---")
-        st.write("SGS Sample Keys:", list(sgs[0].keys()))
-        st.write("M2 Sample Keys:", list(m2_raw[0].keys()))
-
-        # 2. キーの動的特定（名前が微妙に違っても探す）
-        # 10年債利回りを探す
-        k_10y = next((k for k in sgs[0].keys() if '10_year' in k.lower() or '10-year' in k.lower()), None)
-        k_2y = next((k for k in sgs[0].keys() if '2_year' in k.lower() or '2-year' in k.lower()), None)
-        k_m2 = next((k for k in m2_raw[0].keys() if 'm2' in k.lower()), None)
-
-        if not k_10y or not k_m2:
-            st.error(f"Field names not found. Available: {list(sgs[0].keys())}")
+        if not sgs_records or not m2_records:
+            st.error("Failed to retrieve data from data.gov.sg")
             return None
 
-        # 3. ロジック計算
-        yields_10y = [float(r[k_10y]) for r in sgs if r[k_10y] is not None]
-        yields_2y = [float(r[k_2y]) for r in sgs if r[k_2y] is not None]
+        # --- 10Y Yield Logic ---
+        # 最新のレコードから取得
+        latest_sgs = sgs_records[0]
+        # キー名は通常 "10_year_bond_yield" ですが、ここで再確認
+        y_10y = float(latest_sgs.get("10_year_bond_yield", 0))
+        y_2y = float(latest_sgs.get("2_year_bond_yield", 0))
         
-        # [Market Dialogue]
-        vol_10y = pd.Series(yields_10y).diff().std()
-        market_pos_score = int(max(0, 100 - (vol_10y * 500)) + max(0, min(100, 100 + (yields_10y[0] - yields_2y[0]) * 100)))
+        # ボラティリティ計算（直近30日分）
+        yields_series = pd.Series([float(r.get("10_year_bond_yield", 0)) for r in sgs_records])
+        vol_10y = yields_series.diff().std()
 
-        # [Monetary Balance]
-        m2_latest = float(m2_raw[0][k_m2])
-        m2_prev_year = float(m2_raw[-1][k_m2]) # 取得した中で一番古いデータと比較
-        m2_yoy = ((m2_latest / m2_prev_year) - 1) * 100
+        # --- 5軸スコアリング（FRB版の思想を継承） ---
+        market_pos_score = int(max(0, 100 - (vol_10y * 500)) + max(0, min(100, 100 + (y_10y - y_2y) * 100)))
+        
+        m2_latest = float(m2_records[0].get("m2", 0))
+        m2_prev = float(m2_records[12].get("m2", m2_latest)) # 1年前
+        m2_yoy = ((m2_latest / m2_prev) - 1) * 100
         cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
 
-        # 残りのスコアは一旦シンガポール基準で固定
         mas_axes = {
-            "Future Focus": 175,
+            "Future Focus": 175, 
             "Market Position": market_pos_score,
             "Financial Strength": 160,
             "Cashflow Quality": cashflow_score,
@@ -173,12 +170,12 @@ def fetch_mas_logic():
             "axes": mas_axes,
             "total": int(sum(mas_axes.values())),
             "name": "MAS Composite (Singapore)",
-            "price_hist": pd.Series(yields_10y[::-1]), 
-            "current_price": yields_10y[0],
-            "pe": "Institutional",
+            "price_hist": yields_series[::-1],
+            "current_price": y_10y,
+            "pe": "SG-SGS",
             "market_cap": 0
         }
 
     except Exception as e:
-        st.error(f"MAS Logic Error: {e}")
+        st.error(f"MAS v2 Logic Error: {e}")
         return None
