@@ -115,62 +115,32 @@ def fetch_data(symbol, name):
 # data_logic.py の一番最後に貼り付け
 @st.cache_data(ttl=86400)
 def fetch_mas_logic():
-    import requests
-    import pandas as pd
-    import streamlit as st
+    SGS_ID = "d_91724f72836261541f5343f8e5b4e073"
 
-    # 1. 準備：IDとキーの設定
-    SGS_ID = "d_91724f72836261541f5343f8e5b4e073" 
-    API_KEY = "v2:6ccf6fcb9d8a499d1a94f9ecd44d6f571a769dc3fe1f0a69da114bbcf8c5fae7:fCXH_8UaVKqzonP7Nwsq7Hw0UjAB0Dzj" # 👈 ここを書き換え！
-    
-    url = f"https://api.data.gov.sg/v2/public/api/datasets/{SGS_ID}/data"
-    
     headers = {
-        "x-api-key": API_KEY,
+        "x-api-key": st.secrets["MAS_API_KEY"],
         "User-Agent": "Mozilla/5.0"
     }
 
     try:
-        # 2. データ取得
-        res = requests.get(url, headers=headers, timeout=10)
-        
+        # Step 1: initiate download
+        init_url = f"https://api.data.gov.sg/v2/public/api/datasets/{SGS_ID}/initiate-download"
+        res = requests.get(init_url, headers=headers, timeout=10)
+
         if res.status_code != 200:
-            st.error(f"MAS API Error: {res.status_code} - {res.text}")
+            st.error(f"Init Error: {res.status_code} - {res.text}")
             return None
 
-        raw_json = res.json()
-        records = raw_json.get("data", {}).get("records", [])
+        download_url = res.json()["data"]["url"]
 
-        if not records:
-            st.warning("No records found in MAS dataset.")
-            return None
+        # Step 2: fetch actual data
+        data = requests.get(download_url, timeout=10).json()
+        records = data["data"]["records"]
 
-        # 3. 解析（キー名の自動判別機能付き）
-        first = records[0]
-        # 10年債利回りのキーを探す（大体 '10_year_bond_yield'）
-        k_10y = next((k for k in first.keys() if '10_year' in k.lower()), "10_year_bond_yield")
-        y_10y = float(first.get(k_10y, 2.5))
+        st.success("MAS connection successful")
 
-        # 4. スコアリング（シンガポールの安定性を反映）
-        # 本来はM2等も取りますが、まずはこの接続を成功させます
-        mas_axes = {
-            "Future Focus": 185,      # SGはインフレ抑制が極めて優秀
-            "Market Position": 170,   # SGSの格付けはAAA
-            "Financial Strength": 190, # 圧倒的な外貨準備
-            "Cashflow Quality": 165,  # 安定したマネーサプライ
-            "People": 180             # 高度な人材基盤
-        }
-
-        return {
-            "axes": mas_axes,
-            "total": int(sum(mas_axes.values())),
-            "name": "MAS Composite (Singapore)",
-            "price_hist": pd.Series([float(r.get(k_10y, 2.5)) for r in records][::-1]),
-            "current_price": y_10y,
-            "pe": "AAA Rated",
-            "market_cap": 0
-        }
+        return records
 
     except Exception as e:
-        st.error(f"MAS Logic Final Error: {e}")
+        st.error(f"MAS Final Error: {e}")
         return None
