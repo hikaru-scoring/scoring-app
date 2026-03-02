@@ -119,63 +119,58 @@ def fetch_mas_logic():
     import pandas as pd
     import streamlit as st
 
-    # 🎯 2026年現在の SGS Yield Curve の Dataset ID
+    # 1. 準備：IDとキーの設定
     SGS_ID = "d_91724f72836261541f5343f8e5b4e073" 
+    API_KEY = "v2:6ccf6fcb9d8a499d1a94f9ecd44d6f571a769dc3fe1f0a69da114bbcf8c5fae7:fCXH_8UaVKqzonP7Nwsq7Hw0UjAB0Dzj" # 👈 ここを書き換え！
     
-    # 🎯 v2 API の正規エンドポイント
-    url = f"https://api.data.gov.sg/v2/public/api/datasets/{SGS_ID}/data?limit=5"
+    url = f"https://api.data.gov.sg/v2/public/api/datasets/{SGS_ID}/data"
+    
+    headers = {
+        "x-api-key": API_KEY,
+        "User-Agent": "Mozilla/5.0"
+    }
 
     try:
-        # --- 🔍 診断フェーズ ---
-        res = requests.get(url, timeout=10)
-        
-        st.write("--- 🛠 MAS API DIAGNOSIS ---")
-        st.write(f"📡 Status Code: {res.status_code}")
+        # 2. データ取得
+        res = requests.get(url, headers=headers, timeout=10)
         
         if res.status_code != 200:
-            st.error(f"Failed to connect. Error: {res.text[:200]}")
+            st.error(f"MAS API Error: {res.status_code} - {res.text}")
             return None
 
-        # --- 📊 データ解析フェーズ ---
         raw_json = res.json()
-        
-        # JSONの中身を画面に出して、正しいキー名を特定する
-        st.success("Connection Success! Reviewing JSON structure...")
-        st.json(raw_json) 
-
-        # records を取り出す
         records = raw_json.get("data", {}).get("records", [])
-        
+
         if not records:
-            st.warning("No records found in this dataset.")
+            st.warning("No records found in MAS dataset.")
             return None
 
-        # 🚀 ここで「10_year_bond_yield」という名前が正しいか自動チェック
-        first_row = records[0]
-        st.write("Current Keys found in data:", list(first_row.keys()))
+        # 3. 解析（キー名の自動判別機能付き）
+        first = records[0]
+        # 10年債利回りのキーを探す（大体 '10_year_bond_yield'）
+        k_10y = next((k for k in first.keys() if '10_year' in k.lower()), "10_year_bond_yield")
+        y_10y = float(first.get(k_10y, 2.5))
 
-        # --- 📈 均衡ロジック計算 (暫定) ---
-        # 正しいキーが見つかれば計算、なければ仮の数値で描画を止めない
-        y_10y = float(first_row.get("10_year_bond_yield", 2.8)) # 見つからなければ 2.8
-        
+        # 4. スコアリング（シンガポールの安定性を反映）
+        # 本来はM2等も取りますが、まずはこの接続を成功させます
         mas_axes = {
-            "Future Focus": 175, 
-            "Market Position": 160,
-            "Financial Strength": 165,
-            "Cashflow Quality": 150,
-            "People": 180
+            "Future Focus": 185,      # SGはインフレ抑制が極めて優秀
+            "Market Position": 170,   # SGSの格付けはAAA
+            "Financial Strength": 190, # 圧倒的な外貨準備
+            "Cashflow Quality": 165,  # 安定したマネーサプライ
+            "People": 180             # 高度な人材基盤
         }
 
         return {
             "axes": mas_axes,
             "total": int(sum(mas_axes.values())),
             "name": "MAS Composite (Singapore)",
-            "price_hist": pd.Series([r.get("10_year_bond_yield", 2.8) for r in records][::-1]),
+            "price_hist": pd.Series([float(r.get(k_10y, 2.5)) for r in records][::-1]),
             "current_price": y_10y,
-            "pe": "SG-SGS",
+            "pe": "AAA Rated",
             "market_cap": 0
         }
 
     except Exception as e:
-        st.error(f"Critical Logic Error: {e}")
+        st.error(f"MAS Logic Final Error: {e}")
         return None
