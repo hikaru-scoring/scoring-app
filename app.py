@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
 from data_logic import fetch_data
 
-APP_TITLE = "FRS-1000 — SGX Dashboard"
+APP_TITLE = "Scoring Dashboard"
 # 冒頭 9行目付近
 AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
 
@@ -15,13 +15,13 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
-    # --- 🚀 厳選5銘柄固定ロジック（ここを完全に置き換え） ---
+    # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
     top_5 = [
-        {"name": "DBS Group", "symbol": "D05"},
-        {"name": "Singtel", "symbol": "Z74"},
-        {"name": "OCBC Bank", "symbol": "O39"},
-        {"name": "Keppel Ltd", "symbol": "BN4"},
-        {"name": "CapitaLand Investment", "symbol": "9CI"}
+        {"name": "US 10Y Yield", "symbol": "^TNX"},
+        {"name": "Copper (Industrial)", "symbol": "HG=F"},
+        {"name": "WTI Crude Oil", "symbol": "CL=F"},
+        {"name": "Bitcoin (Digital Gold)", "symbol": "BTC-USD"},
+        {"name": "SGS 10Y (MAS)", "symbol": "MAS"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
@@ -88,11 +88,11 @@ def main():
             
 # 🚀 会社用のロジック解説（Peopleに復刻）
             logic_descriptions = {
-                "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
-                "Market Position": "Market Volatility × Market Capitalization",
-                "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
-                "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
-                "People": "Long-term Growth × Dividend Yield"
+                "Future Focus": "Inflation Forecasting & Control",
+                "Market Position": "Yield Stability & Curve Credibility",
+                "Financial Strength": "Real Rate Cushion (Policy Ammo)",
+                "Cashflow Quality": "M2 Money Supply Optimization",
+                "People": "Natural Rate of Unemployment Target"
             }
             # 🚀 原油用のロジック解説 (data_logic.py の計算式に準拠)
             oil_labels = ["Demand Forecast", "Geopolitical Risk", "Price Level Stress", "Supply Stability", "Market Heat Index"]
