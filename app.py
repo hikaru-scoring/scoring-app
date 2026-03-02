@@ -78,6 +78,10 @@ def main():
             st.session_state.saved_data = fetch_oil_data()
             st.rerun()
 
+        # --- 🚀 修正ポイント：ここを追加 ---
+        source = st.session_state.saved_data if st.session_state.saved_data else data
+        display_total = int(data.get("total", 0))
+
         # --- 🚀 1. 看板（ラベル）を銘柄ごとに自動決定 ---
         if any(x in name for x in ["Copper", "Oil", "WTI"]):
             current_axes = ["Industrial Demand", "Supply Chain", "Global Inventory", "Price Volatility", "Macro Hedge"]
