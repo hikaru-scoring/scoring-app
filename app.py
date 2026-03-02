@@ -131,24 +131,23 @@ def main():
                     </div>
                 """, unsafe_allow_html=True)
 
-        # 3. 下段：株価チャート
-        st.markdown("<div class='section-title'>10-Year Treasury Yield</div>", unsafe_allow_html=True)
+        # 3. 下段：チャート（クリック・ズーム禁止版）
+        st.markdown(f"<div class='section-title'>V. {name} Trend</div>", unsafe_allow_html=True)
         fig_p = go.Figure()
-        if st.session_state.saved_data:
-            s_data = st.session_state.saved_data
-            # 市場が違う（SGX vs 米国先物）のでmergeせず、それぞれ%変化率で描画
-            y1 = (data['price_hist'] / data['price_hist'].iloc[0] - 1) * 100
-            y2 = (s_data['price_hist'] / s_data['price_hist'].iloc[0] - 1) * 100
-            
-            fig_p.add_trace(go.Scatter(x=y1.index, y=y1.values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
-            fig_p.add_trace(go.Scatter(x=y2.index, y=y2.values, mode='lines', name=s_data['name'], line=dict(color='#F4A261', width=3)))
-            fig_p.update_layout(yaxis_title="Return (%)")
-        else:
-            fig_p.add_trace(go.Scatter(x=data['price_hist'].index, y=data['price_hist'].values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
-            fig_p.update_layout(yaxis_title="Price")
 
-        fig_p.update_layout(plot_bgcolor='white', height=400, margin=dict(l=0, r=0, t=20, b=0), hovermode="x unified")
-        st.plotly_chart(fig_p, use_container_width=True)
+        # 🎯 比較は不要なので、シンプルに10年債利回りを描画
+        fig_p.add_trace(go.Scatter(x=data['price_hist'].index, y=data['price_hist'].values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
+
+        # 🎯 ここに「3つの設定（clickmode / dragmode / config）」を入れました
+        fig_p.update_layout(
+            plot_bgcolor='white', height=400, margin=dict(l=0, r=0, t=20, b=0), 
+            hovermode="x unified", yaxis_title="Yield (%)",
+            clickmode='none',  # 👈 1つ目：クリック反応を消す
+            dragmode=False     # 👈 2つ目：ズーム（変な感じ）を消す
+        )
+
+        # 🎯 3つ目：右上のツールバーも消してスッキリ
+        st.plotly_chart(fig_p, use_container_width=True, config={'displayModeBar': False})
 
         # 4. Snapshot（比較対応版）
         st.markdown("<div class='section-title'>VI. Snapshot Comparison</div>", unsafe_allow_html=True)
