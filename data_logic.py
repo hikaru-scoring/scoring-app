@@ -118,64 +118,64 @@ def fetch_mas_logic():
     import requests
     import pandas as pd
     import streamlit as st
-    
-    # 🎯 v2 Dataset IDs
-    SGS_ID = "d_91724f72836261541f5343f8e5b4e073"
-    M2_ID = "d_5391f6e2469446e9df5370d97371101e"
 
-    def get_mas_v2(dataset_id):
-        url = f"https://api.data.gov.sg/v2/public/api/datasets/{dataset_id}/data"
-        res = requests.get(url, timeout=10)
-        if res.status_code == 200:
-            # v2の構造に合わせて抽出
-            return res.json()["data"]["records"]
-        return None
+    # 🎯 2026年現在の SGS Yield Curve の Dataset ID
+    SGS_ID = "d_91724f72836261541f5343f8e5b4e073" 
+    
+    # 🎯 v2 API の正規エンドポイント
+    url = f"https://api.data.gov.sg/v2/public/api/datasets/{SGS_ID}/data?limit=5"
 
     try:
-        sgs_records = get_mas_v2(SGS_ID)
-        m2_records = get_mas_v2(M2_ID)
-
-        if not sgs_records or not m2_records:
-            st.error("Failed to retrieve data from data.gov.sg")
+        # --- 🔍 診断フェーズ ---
+        res = requests.get(url, timeout=10)
+        
+        st.write("--- 🛠 MAS API DIAGNOSIS ---")
+        st.write(f"📡 Status Code: {res.status_code}")
+        
+        if res.status_code != 200:
+            st.error(f"Failed to connect. Error: {res.text[:200]}")
             return None
 
-        # --- 10Y Yield Logic ---
-        # 最新のレコードから取得
-        latest_sgs = sgs_records[0]
-        # キー名は通常 "10_year_bond_yield" ですが、ここで再確認
-        y_10y = float(latest_sgs.get("10_year_bond_yield", 0))
-        y_2y = float(latest_sgs.get("2_year_bond_yield", 0))
+        # --- 📊 データ解析フェーズ ---
+        raw_json = res.json()
         
-        # ボラティリティ計算（直近30日分）
-        yields_series = pd.Series([float(r.get("10_year_bond_yield", 0)) for r in sgs_records])
-        vol_10y = yields_series.diff().std()
+        # JSONの中身を画面に出して、正しいキー名を特定する
+        st.success("Connection Success! Reviewing JSON structure...")
+        st.json(raw_json) 
 
-        # --- 5軸スコアリング（FRB版の思想を継承） ---
-        market_pos_score = int(max(0, 100 - (vol_10y * 500)) + max(0, min(100, 100 + (y_10y - y_2y) * 100)))
+        # records を取り出す
+        records = raw_json.get("data", {}).get("records", [])
         
-        m2_latest = float(m2_records[0].get("m2", 0))
-        m2_prev = float(m2_records[12].get("m2", m2_latest)) # 1年前
-        m2_yoy = ((m2_latest / m2_prev) - 1) * 100
-        cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 25))
+        if not records:
+            st.warning("No records found in this dataset.")
+            return None
 
+        # 🚀 ここで「10_year_bond_yield」という名前が正しいか自動チェック
+        first_row = records[0]
+        st.write("Current Keys found in data:", list(first_row.keys()))
+
+        # --- 📈 均衡ロジック計算 (暫定) ---
+        # 正しいキーが見つかれば計算、なければ仮の数値で描画を止めない
+        y_10y = float(first_row.get("10_year_bond_yield", 2.8)) # 見つからなければ 2.8
+        
         mas_axes = {
             "Future Focus": 175, 
-            "Market Position": market_pos_score,
-            "Financial Strength": 160,
-            "Cashflow Quality": cashflow_score,
-            "People": 185
+            "Market Position": 160,
+            "Financial Strength": 165,
+            "Cashflow Quality": 150,
+            "People": 180
         }
 
         return {
             "axes": mas_axes,
             "total": int(sum(mas_axes.values())),
             "name": "MAS Composite (Singapore)",
-            "price_hist": yields_series[::-1],
+            "price_hist": pd.Series([r.get("10_year_bond_yield", 2.8) for r in records][::-1]),
             "current_price": y_10y,
             "pe": "SG-SGS",
             "market_cap": 0
         }
 
     except Exception as e:
-        st.error(f"MAS v2 Logic Error: {e}")
+        st.error(f"Critical Logic Error: {e}")
         return None
