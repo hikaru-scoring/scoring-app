@@ -15,13 +15,9 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
-    # --- 🚀 厳選5資産固定ロジック（Global Macro版） ---
+    # --- 🚀 厳選1資産固定ロジック（Global Macro版） ---
     top_5 = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
-        {"name": "Copper (Industrial)", "symbol": "HG=F"},
-        {"name": "WTI Crude Oil", "symbol": "CL=F"},
-        {"name": "Bitcoin (Digital Gold)", "symbol": "BTC-USD"},
-        {"name": "SGS 10Y (MAS)", "symbol": "MAS"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
@@ -55,10 +51,6 @@ def main():
             from data_logic import fetch_oil_data 
             st.session_state.saved_data = fetch_oil_data()
             st.rerun()
-
-        # 1. 総合点数（中央上部）
-        source = st.session_state.saved_data if st.session_state.saved_data else data
-        display_total = int(data.get("total", 0))
 
         # 1. 総合点数（中央上部）
         st.markdown(f"""
