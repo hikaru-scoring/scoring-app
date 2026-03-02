@@ -78,73 +78,52 @@ def main():
             st.session_state.saved_data = fetch_oil_data()
             st.rerun()
 
-        # 1. 総合点数（中央上部）
-        source = st.session_state.saved_data if st.session_state.saved_data else data
-        display_total = int(data.get("total", 0))
+        # --- 🚀 1. 看板（ラベル）を銘柄ごとに自動決定 ---
+        if any(x in name for x in ["Copper", "Oil", "WTI"]):
+            current_axes = ["Industrial Demand", "Supply Chain", "Global Inventory", "Price Volatility", "Macro Hedge"]
+            descriptions = {"Industrial Demand": "PMI Index", "Supply Chain": "Mining Output", "Global Inventory": "LME Stock", "Price Volatility": "Spot Stdev", "Macro Hedge": "USD Corr"}
+        elif "Bitcoin" in name:
+            current_axes = ["Network Hashrate", "Adoption Rate", "Scarcity Value", "Market Liquidity", "Sovereign Risk"]
+            descriptions = {"Network Hashrate": "Security Budget", "Adoption Rate": "Active Wallets", "Scarcity Value": "S2F Ratio", "Market Liquidity": "Order Book", "Sovereign Risk": "Fiat Risk"}
+        else:
+            # 米国債（FRB）用
+            current_axes = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+            descriptions = {"Future Focus": "Inflation Control", "Market Position": "Yield Stability", "Financial Strength": "Real Rate Ammo", "Cashflow Quality": "M2 Balance", "People": "Employment Balance"}
 
-        # 1. 総合点数（中央上部）
+        # --- 🚀 2. 総合点数の表示（格付けなしのシンプル版） ---
         st.markdown(f"""
-            <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
-                <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
-                <div class="total-score-val">{display_total} <span style="font-size:30px; color:#DDD;">/ 1000</span></div>
+            <div class="total-score-container" style="margin-bottom: 20px; padding: 20px; background: white; border-radius: 15px; border: 1px solid #e2e8f0; text-align: center;">
+                <div class="total-score-label" style="color: #94a3b8; font-size: 14px; font-weight: 800;">TOTAL SCORE</div>
+                <div class="total-score-val" style="font-size: 50px; font-weight: 900; color: #1e293b;">
+                    {display_total} <span style="font-size: 24px; color: #cbd5e1;">/ 1000</span>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
-        # 2. 中段：レーダーチャート（左）と DNA点数（右）
+        # --- 🚀 3. レーダーチャート（左）と詳細カード（右） ---
         col_left, col_right = st.columns([1.8, 1])
 
         with col_left:
-            # タイトルの上下余白を極限まで詰める
             st.markdown("<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>", unsafe_allow_html=True)
-            fig_r = render_radar_chart(data, st.session_state.saved_data, AXES)
+            # 自動決定した current_axes を使用
+            fig_r = render_radar_chart(data, st.session_state.saved_data, current_axes)
             st.plotly_chart(fig_r, use_container_width=True)
 
         with col_right:
-            # 右側のタイトルも左に合わせて上に寄せる
             st.markdown("<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>", unsafe_allow_html=True)
-            
-            # 表示ソースの確定
-            source = st.session_state.saved_data if st.session_state.saved_data else data
-            is_oil = source.get('name') == "WTI CRUDE OIL"
-            
-            
-# 🚀 会社用のロジック解説（Peopleに復刻）
-            logic_descriptions = {
-                "Future Focus": "Inflation Control (CPI × Expectations)",
-                "Market Position": "Yield Stability × Curve Signal",
-                "Financial Strength": "Real Policy Ammo (Fed Funds – CPI)",
-                "Cashflow Quality": "Money Supply Balance (M2 YoY vs Ideal)",
-                "People": "Employment Balance"
-            }
-            
-            # 指標カードの生成（25% Enlarged Version）
-            for i, k in enumerate(AXES):
-                v1 = data["axes"].get(k, 0)  # 現在の資産（青）
-                v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None # 保存済み（オレンジ）
-                
-                display_label = oil_labels[i] if is_oil else k
-                desc_text = oil_descriptions.get(display_label, "") if is_oil else logic_descriptions.get(k, "")
-                
-                # スコア表示のHTML（フォントサイズを25%アップ: 1.3em -> 1.7em / 0.7em -> 0.9em）
+            for k in current_axes:
+                v1 = data["axes"].get(k, 0)
+                v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None
                 score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
-                if v2 is not None:
-                    score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
+                if v2 is not None: score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
 
                 st.markdown(f"""
-                    <div style="
-                        background-color: #FFFFFF; 
-                        padding: 20px; 
-                        border-radius: 12px; 
-                        margin-bottom: 12px; 
-                        border: 1px solid #E0E0E0; 
-                        border-left: 8px solid #2E7BE6; 
-                        box-shadow: 2px 2px 5px rgba(0,0,0,0.07);
-                    ">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                            <span style="font-size: 1.2em; font-weight: 800; color: #333333;">{display_label}</span>
-                            <span style="font-size: 1.7em; font-weight: 900; line-height: 1;">{score_html}</span>
+                    <div style="background-color: #FFFFFF; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #E0E0E0; border-left: 8px solid #2E7BE6;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 1.1em; font-weight: 800; color: #333333;">{k}</span>
+                            <span style="font-size: 1.5em; font-weight: 900; line-height: 1;">{score_html}</span>
                         </div>
-                        <p style="font-size: 0.95em; color: #777777; margin: 0; line-height: 1.3; font-weight: 500;">{desc_text}</p>
+                        <p style="font-size: 0.85em; color: #777777; margin: 0; line-height: 1.2;">{descriptions.get(k, "")}</p>
                     </div>
                 """, unsafe_allow_html=True)
 
