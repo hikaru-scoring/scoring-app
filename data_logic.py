@@ -113,34 +113,3 @@ def fetch_data(symbol, name):
         return None
 
 # data_logic.py の一番最後に貼り付け
-@st.cache_data(ttl=86400)
-def fetch_mas_logic():
-    SGS_ID = "d_91724f72836261541f5343f8e5b4e073"
-
-    headers = {
-        "x-api-key": st.secrets["MAS_API_KEY"],
-        "User-Agent": "Mozilla/5.0"
-    }
-
-    try:
-        # Step 1: initiate download
-        init_url = f"https://api.data.gov.sg/v2/public/api/datasets/{SGS_ID}/initiate-download"
-        res = requests.get(init_url, headers=headers, timeout=10)
-
-        if res.status_code != 200:
-            st.error(f"Init Error: {res.status_code} - {res.text}")
-            return None
-
-        download_url = res.json()["data"]["url"]
-
-        # Step 2: fetch actual data
-        data = requests.get(download_url, timeout=10).json()
-        records = data["data"]["records"]
-
-        st.success("MAS connection successful")
-
-        return records
-
-    except Exception as e:
-        st.error(f"MAS Final Error: {e}")
-        return None
