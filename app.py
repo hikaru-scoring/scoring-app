@@ -36,6 +36,17 @@ def main():
     save_it = c1.button("💾 SAVE COMPANY")
     clear_it = c2.button("🗑️ CLEAR")
     compare_oil = c3.button("🛢️ COMPARE WITH OIL")
+
+    # 1. 総合点数（中央上部）
+        source = st.session_state.saved_data if st.session_state.saved_data else data
+        display_total = int(data.get("total", 0))
+
+        st.markdown(f"""
+            <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
+                <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
+                <div class="total-score-val">{display_total} <span style="font-size:30px; color:#DDD;">/ 1000</span></div>
+            </div>
+        """, unsafe_allow_html=True)
     
     # --- 🚀 2. 総合点数の表示（元のシンプルなデザインに復元） ---
         st.markdown(f"""
@@ -56,22 +67,31 @@ def main():
         with col_right:
             st.markdown("<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>", unsafe_allow_html=True)
             
-            for k in current_axes:
+            for i, k in enumerate(current_axes):
                 v1 = data["axes"].get(k, 0)
                 v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None
                 
+                # スコア表示（②のサイズ：1.7em / 0.9em）
                 score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
                 if v2 is not None:
                     score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
 
-                # 2枚目の画像に合わせたシンプルなカードデザイン
+                # 🎯 ②のUI（余白20px, 影あり, フォント1.2em / 0.95em）を完全再現
                 st.markdown(f"""
-                    <div style="background-color: #FFFFFF; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #E0E0E0; border-left: 8px solid #2E7BE6;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
-                            <span style="font-size: 1.1em; font-weight: 800; color: #333333;">{k}</span>
-                            <span style="font-size: 1.5em; font-weight: 900; line-height: 1;">{score_html}</span>
+                    <div style="
+                        background-color: #FFFFFF; 
+                        padding: 20px; 
+                        border-radius: 12px; 
+                        margin-bottom: 12px; 
+                        border: 1px solid #E0E0E0; 
+                        border-left: 8px solid #2E7BE6; 
+                        box-shadow: 2px 2px 5px rgba(0,0,0,0.07);
+                    ">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <span style="font-size: 1.2em; font-weight: 800; color: #333333;">{k}</span>
+                            <span style="font-size: 1.7em; font-weight: 900; line-height: 1;">{score_html}</span>
                         </div>
-                        <p style="font-size: 0.85em; color: #777777; margin: 0; line-height: 1.2;">{descriptions.get(k, "")}</p>
+                        <p style="font-size: 0.95em; color: #777777; margin: 0; line-height: 1.3; font-weight: 500;">{descriptions.get(k, "")}</p>
                     </div>
                 """, unsafe_allow_html=True)
 
