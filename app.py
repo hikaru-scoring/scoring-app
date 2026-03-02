@@ -37,72 +37,43 @@ def main():
     clear_it = c2.button("🗑️ CLEAR")
     compare_oil = c3.button("🛢️ COMPARE WITH OIL")
     
-    # 2. メインデータの取得（デバッグ版に差し替え）
-    try:
-        if symbol == "MAS":
-            from data_logic import fetch_mas_logic
-            data = fetch_mas_logic()
-            
-            # 🔴 もし表示されない（Noneが返る）場合、原因を画面に出す
-            if data is None:
-                st.warning("⚠️ MAS data logic failed. Diagnostic mode activated.")
-                import requests
-                # MAS_RESOURCESはdata_logicから直接インポート
-                from data_logic import MAS_RESOURCES
-                
-                # 生データを1件だけ取って構造を確認する
-                test_url = f"https://eservices.mas.gov.sg/api/action/datastore/search.json?resource_id={MAS_RESOURCES['SGS_YIELD']}&limit=1"
-                raw_res = requests.get(test_url).json()
-                
-                st.write("--- [API DEBUG INFO] ---")
-                st.write("Target URL:", test_url)
-                st.json(raw_res) # 👈 これでJSONの中身が画面に表示されます
-        else:
-            data = fetch_data(symbol, name)
-            
-    except Exception as e:
-        st.error(f"Logic Error: {e}")
-        st.stop()
-
-    if data:
-        # 3. ボタンごとの動作設定
-        if save_it: 
-            st.session_state.saved_data = data
-            st.rerun()
-        if clear_it: 
-            st.session_state.saved_data = None
-            st.rerun()
-        if compare_oil:
-            # data_logic.pyから原油データを呼んでくる
-            from data_logic import fetch_oil_data 
-            st.session_state.saved_data = fetch_oil_data()
-            st.rerun()
-
-        # --- 🚀 修正ポイント：ここを追加 ---
-        source = st.session_state.saved_data if st.session_state.saved_data else data
-        display_total = int(data.get("total", 0))
-
-        # --- 🚀 1. 看板（ラベル）を銘柄ごとに自動決定 ---
-        if any(x in name for x in ["Copper", "Oil", "WTI"]):
-            current_axes = ["Industrial Demand", "Supply Chain", "Global Inventory", "Price Volatility", "Macro Hedge"]
-            descriptions = {"Industrial Demand": "PMI Index", "Supply Chain": "Mining Output", "Global Inventory": "LME Stock", "Price Volatility": "Spot Stdev", "Macro Hedge": "USD Corr"}
-        elif "Bitcoin" in name:
-            current_axes = ["Network Hashrate", "Adoption Rate", "Scarcity Value", "Market Liquidity", "Sovereign Risk"]
-            descriptions = {"Network Hashrate": "Security Budget", "Adoption Rate": "Active Wallets", "Scarcity Value": "S2F Ratio", "Market Liquidity": "Order Book", "Sovereign Risk": "Fiat Risk"}
-        else:
-            # 米国債（FRB）用
-            current_axes = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
-            descriptions = {"Future Focus": "Inflation Control", "Market Position": "Yield Stability", "Financial Strength": "Real Rate Ammo", "Cashflow Quality": "M2 Balance", "People": "Employment Balance"}
-
-        # --- 🚀 2. 総合点数の表示（格付けなしのシンプル版） ---
+    # --- 🚀 2. 総合点数の表示（元のシンプルなデザインに復元） ---
         st.markdown(f"""
-            <div class="total-score-container" style="margin-bottom: 20px; padding: 20px; background: white; border-radius: 15px; border: 1px solid #e2e8f0; text-align: center;">
-                <div class="total-score-label" style="color: #94a3b8; font-size: 14px; font-weight: 800;">TOTAL SCORE</div>
-                <div class="total-score-val" style="font-size: 50px; font-weight: 900; color: #1e293b;">
-                    {display_total} <span style="font-size: 24px; color: #cbd5e1;">/ 1000</span>
-                </div>
+            <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
+                <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
+                <div class="total-score-val">{display_total} <span style="font-size:30px; color:#DDD;">/ 1000</span></div>
             </div>
         """, unsafe_allow_html=True)
+
+        # --- 🚀 3. レーダーチャート（左）と詳細カード（右） ---
+        col_left, col_right = st.columns([1.8, 1])
+
+        with col_left:
+            st.markdown("<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>", unsafe_allow_html=True)
+            fig_r = render_radar_chart(data, st.session_state.saved_data, current_axes)
+            st.plotly_chart(fig_r, use_container_width=True)
+
+        with col_right:
+            st.markdown("<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>", unsafe_allow_html=True)
+            
+            for k in current_axes:
+                v1 = data["axes"].get(k, 0)
+                v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None
+                
+                score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
+                if v2 is not None:
+                    score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
+
+                # 2枚目の画像に合わせたシンプルなカードデザイン
+                st.markdown(f"""
+                    <div style="background-color: #FFFFFF; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #E0E0E0; border-left: 8px solid #2E7BE6;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                            <span style="font-size: 1.1em; font-weight: 800; color: #333333;">{k}</span>
+                            <span style="font-size: 1.5em; font-weight: 900; line-height: 1;">{score_html}</span>
+                        </div>
+                        <p style="font-size: 0.85em; color: #777777; margin: 0; line-height: 1.2;">{descriptions.get(k, "")}</p>
+                    </div>
+                """, unsafe_allow_html=True)
 
         # --- 🚀 3. レーダーチャート（左）と詳細カード（右） ---
         col_left, col_right = st.columns([1.8, 1])
