@@ -37,6 +37,7 @@ def render_radar_chart(data, saved_data, axes_labels):
         ))
     fig.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 200], gridcolor="#F0F0F0"), bgcolor='white'),
-        showlegend=True, margin=dict(l=50, r=50, t=20, b=20), height=500
+        showlegend=True, margin=dict(l=50, r=50, t=20, b=20), height=500,clickmode='none', 
+        dragmode=False
     )
     return fig
