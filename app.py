@@ -159,9 +159,6 @@ def main():
         # 🎯 右上のメニューバーも消してスッキリ
         st.plotly_chart(fig_p, use_container_width=True, config={'displayModeBar': False})
 
-        # 🎯 3つ目：右上のツールバーも消してスッキリ
-        st.plotly_chart(fig_p, use_container_width=True, config={'displayModeBar': False})
-
         # 4. Snapshot（比較対応版）
         st.markdown("<div class='section-title'>VI. Snapshot Comparison</div>", unsafe_allow_html=True)
         s1, s2, s3 = st.columns(3)
