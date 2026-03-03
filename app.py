@@ -7,11 +7,28 @@ from data_logic import fetch_data
 APP_TITLE = "Scoring Dashboard"
 # 冒頭 9行目付近
 # --- 指標定義（FRB用とコモディティ用） ---
-    FRB_AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
-    COMMO_AXES = ["Annual Trajectory", "Relative Momentum", "Structural Stress", "Liquidity Energy", "Cycle Equilibrium"]
+FRB_AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+COMMO_AXES = ["Annual Trajectory", "Relative Momentum", "Structural Stress", "Liquidity Energy", "Cycle Equilibrium"]
 
-    # 選択された銘柄がFRB（^TNX）かどうかで使うラベルを切り替える
-    current_axes = FRB_AXES if symbol == "^TNX" else COMMO_AXES
+    # 🚀 表示するラベルと解説を動的に決定
+            if symbol == "^TNX":
+                display_axes = FRB_AXES
+                descriptions = {
+                    "Future Focus": "Inflation Forecasting & Control",
+                    "Market Position": "Yield Stability & Curve Credibility",
+                    "Financial Strength": "Real Rate Cushion (Policy Ammo)",
+                    "Cashflow Quality": "M2 Money Supply Optimization",
+                    "People": "Natural Rate of Unemployment Target"
+                }
+            else:
+                display_axes = COMMO_AXES
+                descriptions = {
+                    "Annual Trajectory": "YoY Primary Trend & Long-term Supply-Demand Displacement",
+                    "Relative Momentum": "Short-term Overbought/Oversold Velocity & Price Impulse",
+                    "Structural Stress": "Volatility Regime Analysis & Market Fragility Index",
+                    "Liquidity Energy": "Volume-Weighted Capital Inflow & Transaction Integrity",
+                    "Cycle Equilibrium": "Mean Reversion Probability & Annual Range Positioning"
+                }
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout="wide")
