@@ -1,7 +1,7 @@
 import pandas as pd
 import streamlit as st
-import pandas_datareader.data as web
 from fredapi import Fred
+import io
 
 # --------------------------------------------------
 # 🏛️ 1. FRBスコア専用ロジック（聖域：一切変えない）
@@ -60,8 +60,13 @@ def fetch_frb_logic(name):
 # --------------------------------------------------
 def fetch_commodity_logic(symbol, name):
     try:
-        # 生データの取り込み
-        df = web.DataReader(symbol, 'stooq')
+        url = f"https://stooq.com/q/d/l/?s={symbol.lower()}&i=d"
+        res = requests.get(url, timeout=20)
+        res.raise_for_status()
+
+        df = pd.read_csv(io.StringIO(res.text))
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.set_index("Date").sort_index()
         if df.empty: return None
         df = df.sort_index().tail(252)
         
