@@ -57,3 +57,10 @@ def fetch_frb_logic(name):
 
 def fetch_oil_data():
     return fetch_data("CL.F", "WTI CRUDE OIL")
+
+def fetch_data(symbol, name):
+    if symbol == "^TNX":
+        return fetch_frb_logic(name)
+    else:
+        st.error(f"No handler for symbol: {symbol}")
+        return None   
