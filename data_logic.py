@@ -62,34 +62,22 @@ def fetch_frb_logic(name):
 # --------------------------------------------------
 @st.cache_data(ttl=86400)
 def fetch_commodity_logic(symbol, name):
-    
     try:
-        # symbolをStooqが受け付けやすい形式（末尾 _f）に変換
-        mapping = {"cl.f": "cl.w", "ng.f": "ng.w", "gc.f": "gc.w", "si.f": "si.w", "hg.f": "hg.w"}
-        stooq_symbol = symbol.lower().replace(".f", "_f")
-        url = f"https://stooq.com/q/d/l/?s={stooq_symbol}&i=d"
-        
-        headers = {"User-Agent": "Mozilla/5.0"}
-        res = requests.get(url, headers=headers, timeout=20)
-        res.raise_for_status()
+        import yfinance as yf
+        yf_symbol = symbol.replace(".F", "=F")
+        df = yf.download(yf_symbol, period="1y", interval="1d", progress=False)
 
-        if not res.text or "Date" not in res.text: return None
-        df = pd.read_csv(io.StringIO(res.text))
-
-        df = pd.read_csv(io.StringIO(res.text))
-        df["Date"] = pd.to_datetime(df["Date"])
-        df = df.set_index("Date").sort_index()
         if df.empty: return None
-        df = df.sort_index().tail(252)
         
-        price_hist = df['Close']
-        high_hist = df['High']
-        low_hist = df['Low']
-        vol_hist = df['Volume']
-        
-        current_price = price_hist.iloc[-1]
-        price_1y_ago = price_hist.iloc[0]
-        price_25d_avg = price_hist.tail(25).mean()
+        # データの抽出（MultiIndex対策）
+        price_hist = df['Close'].iloc[:, 0] if isinstance(df['Close'], pd.DataFrame) else df['Close']
+        high_hist = df['High'].iloc[:, 0] if isinstance(df['High'], pd.DataFrame) else df['High']
+        low_hist = df['Low'].iloc[:, 0] if isinstance(df['Low'], pd.DataFrame) else df['Low']
+        vol_hist = df['Volume'].iloc[:, 0] if isinstance(df['Volume'], pd.DataFrame) else df['Volume']
+      
+        current_price = float(price_hist.iloc[-1])
+        price_1y_ago = float(price_hist.iloc[0])
+        price_25d_avg = float(price_hist.tail(25).mean())
 
         # FRS-1000 スコア計算
         score_1 = max(0, min(200, (current_price / price_1y_ago - 1) * 500 + 100))
