@@ -61,8 +61,10 @@ def fetch_frb_logic(name):
 # --------------------------------------------------
 def fetch_commodity_logic(symbol, name):
     try:
-        stooq_symbol = symbol.lower()
+        # symbolをStooqが受け付けやすい形式（末尾 _f）に変換
+        stooq_symbol = symbol.lower().replace(".f", "_f")
         url = f"https://stooq.com/q/d/l/?s={stooq_symbol}&i=d"
+        
         headers = {"User-Agent": "Mozilla/5.0"}
         res = requests.get(url, headers=headers, timeout=20)
         res.raise_for_status()
