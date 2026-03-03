@@ -24,8 +24,6 @@ def main():
         {"name": "SILVER FUTURES", "symbol": "SI.F"},  # 貴金属：銀
         {"name": "COPPER FUTURES", "symbol": "HG.F"}   # 卑金属：銅
     ]
-
-    ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
     target = st.selectbox("Select Asset", options)
