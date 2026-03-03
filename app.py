@@ -32,7 +32,7 @@ def main():
     
     # 選択した銘柄の名前とシンボルを抽出
     name = target.rsplit(" (", 1)[0]
-    symbol = next(s['symbol'] for s in top_5 if s['name'] == name)
+    symbol = next(s['symbol'] for s in top_ if s['name'] == name)
 
     # 選択した銘柄の名前とシンボルを抽出
     name = target.rsplit(" (", 1)[0]
