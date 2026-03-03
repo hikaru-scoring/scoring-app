@@ -145,4 +145,77 @@ def fetch_data(symbol, name):
         st.error(f"FRB Logic Error: {e}")
         return None
 
-# data_logic.py の一番最後に貼り付け
+def fetch_data(symbol, name):
+    try:
+        # 1. データ取得
+        df = web.DataReader(symbol, 'stooq')
+        if df.empty:
+            return None
+        
+        df = df.sort_index().tail(252) # 直近1年
+        
+        price_hist = df['Close']
+        high_hist = df['High']
+        low_hist = df['Low']
+        vol_hist = df['Volume']
+        
+        current_price = price_hist.iloc[-1]
+        price_1y_ago = price_hist.iloc[0]
+        price_25d_avg = price_hist.tail(25).mean()
+
+        # --- 🚀 FRS-1000 厳密なスコアリング・ロジック ---
+
+        # ① Annual Trajectory (1年前比) : +20%で満点
+        diff_1y = (current_price / price_1y_ago - 1) if price_1y_ago != 0 else 0
+        score_1 = max(0, min(200, diff_1y * 500 + 100))
+
+        # ② Relative Momentum (25日平均比) : +10%で満点
+        diff_25d = (current_price / price_25d_avg - 1) if price_25d_avg != 0 else 0
+        score_2 = max(0, min(200, diff_25d * 1000 + 100))
+
+        # ③ Structural Stress (安定性) : 値幅が半分なら満点
+        daily_range = high_hist - low_hist
+        avg_range_1y = daily_range.mean()
+        current_range_5d = daily_range.tail(5).mean()
+        if current_range_5d > 0:
+            stress_ratio = avg_range_1y / current_range_5d
+            score_3 = max(0, min(200, stress_ratio * 100))
+        else:
+            score_3 = 100.0 # 計算不能時は中立
+
+        # ④ Liquidity Energy (出来高) : 20日平均の2倍で満点
+        avg_volume_20d = vol_hist.tail(20).mean()
+        current_volume = vol_hist.iloc[-1]
+        if avg_volume_20d > 0:
+            volume_ratio = current_volume / avg_volume_20d
+            score_4 = max(0, min(200, volume_ratio * 100))
+        else:
+            score_4 = 100.0
+
+        # ④ Cycle Equilibrium (レンジ位置) : 1年最高値で満点
+        high_1y = price_hist.max()
+        low_1y = price_hist.min()
+        price_range = high_1y - low_1y
+        if price_range > 0:
+            position_ratio = (current_price - low_1y) / price_range
+            score_5 = max(0, min(200, position_ratio * 200))
+        else:
+            score_5 = 100.0
+
+        total_score = score_1 + score_2 + score_3 + score_4 + score_5
+
+        return {
+            "name": name, "symbol": symbol, "current_price": current_price,
+            "total": total_score,
+            "axes": {
+                "Annual Trajectory": score_1,
+                "Relative Momentum": score_2,
+                "Structural Stress": score_3,
+                "Liquidity Energy": score_4,
+                "Cycle Equilibrium": score_5
+            },
+            "price_hist": price_hist, "pe": "N/A", "market_cap": 0
+        }
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
