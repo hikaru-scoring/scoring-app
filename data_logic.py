@@ -55,7 +55,7 @@ def fetch_frb_logic(name):
     except Exception as e:
         st.error(f"FRB Logic Error: {e}")
         return None
-
+        
 # --------------------------------------------------
 # 🛢️ 2. コモディティ専用ロジック（Stooqからデータを取る）
 # --------------------------------------------------
