@@ -68,14 +68,14 @@ def fetch_commodity_logic(symbol, name):
         df = yf.download(yf_symbol, period="1y", interval="1d", progress=False)
 
         if df.empty: return None
-        
-        # データの抽出（MultiIndex対策）
-        # 銘柄ごとのデータ構造の差を吸収する強力な抽出方法
+    
+        # 1. データの抽出（MultiIndex対策：どんな形式でも1列の数字に強制変換）
         price_hist = df['Close'].to_numpy().flatten()
         high_hist = df['High'].to_numpy().flatten()
         low_hist = df['Low'].to_numpy().flatten()
         vol_hist = df['Volume'].to_numpy().flatten()
 
+        # 2. 数値の確定（単一の数値(float)として確実に計算する）
         current_price = float(price_hist[-1])
         price_1y_ago = float(price_hist[0])
         price_25d_avg = float(price_hist[-25:].mean())
