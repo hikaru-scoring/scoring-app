@@ -70,14 +70,15 @@ def fetch_commodity_logic(symbol, name):
         if df.empty: return None
         
         # データの抽出（MultiIndex対策）
-        price_hist = df['Close'].iloc[:, 0] if isinstance(df['Close'], pd.DataFrame) else df['Close']
-        high_hist = df['High'].iloc[:, 0] if isinstance(df['High'], pd.DataFrame) else df['High']
-        low_hist = df['Low'].iloc[:, 0] if isinstance(df['Low'], pd.DataFrame) else df['Low']
-        vol_hist = df['Volume'].iloc[:, 0] if isinstance(df['Volume'], pd.DataFrame) else df['Volume']
-      
-        current_price = float(price_hist.iloc[-1])
-        price_1y_ago = float(price_hist.iloc[0])
-        price_25d_avg = float(price_hist.tail(25).mean())
+        # 銘柄ごとのデータ構造の差を吸収する強力な抽出方法
+        price_hist = df['Close'].to_numpy().flatten()
+        high_hist = df['High'].to_numpy().flatten()
+        low_hist = df['Low'].to_numpy().flatten()
+        vol_hist = df['Volume'].to_numpy().flatten()
+
+        current_price = float(price_hist[-1])
+        price_1y_ago = float(price_hist[0])
+        price_25d_avg = float(price_hist[-25:].mean())
 
         # FRS-1000 スコア計算
         score_1 = max(0, min(200, (current_price / price_1y_ago - 1) * 500 + 100))
