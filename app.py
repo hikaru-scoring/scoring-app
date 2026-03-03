@@ -6,7 +6,12 @@ from data_logic import fetch_data
 
 APP_TITLE = "Scoring Dashboard"
 # 冒頭 9行目付近
-AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+# --- 指標定義（FRB用とコモディティ用） ---
+    FRB_AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+    COMMO_AXES = ["Annual Trajectory", "Relative Momentum", "Structural Stress", "Liquidity Energy", "Cycle Equilibrium"]
+
+    # 選択された銘柄がFRB（^TNX）かどうかで使うラベルを切り替える
+    current_axes = FRB_AXES if symbol == "^TNX" else COMMO_AXES
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout="wide")
