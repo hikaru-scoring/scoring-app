@@ -7,6 +7,7 @@ import requests
 # --------------------------------------------------
 # 🏛️ 1. FRBスコア専用ロジック（聖域：一切変えない）
 # --------------------------------------------------
+@st.cache_data(ttl=86400)
 def fetch_frb_logic(name):
     try:
         fred_key = st.secrets["FRED_API_KEY"]
@@ -59,6 +60,7 @@ def fetch_frb_logic(name):
 # --------------------------------------------------
 # 🛢️ 2. コモディティ専用ロジック（Stooqからデータを取る）
 # --------------------------------------------------
+@st.cache_data(ttl=86400)
 def fetch_commodity_logic(symbol, name):
     
     try:
@@ -118,6 +120,7 @@ def fetch_commodity_logic(symbol, name):
 # --------------------------------------------------
 # 📡 3. ルーター（受付窓口：app.pyからはここだけを呼ぶ）
 # --------------------------------------------------
+@st.cache_data(ttl=86400)
 def fetch_data(symbol, name):
     if symbol == "^TNX":
         return fetch_frb_logic(name)
