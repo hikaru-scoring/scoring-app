@@ -1,8 +1,6 @@
 import pandas as pd
 import streamlit as st
 from fredapi import Fred
-import io
-import requests
 
 # --------------------------------------------------
 # 🏛️ 1. FRBスコア専用ロジック（聖域：一切変えない）
