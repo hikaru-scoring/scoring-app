@@ -104,7 +104,7 @@ def main():
         with col_left:
             # タイトルの上下余白を極限まで詰める
             st.markdown("<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>", unsafe_allow_html=True)
-            fig_r = render_radar_chart(data, st.session_state.saved_data, AXES)
+            fig_r = render_radar_chart(data, st.session_state.saved_data, display_axes)
             st.plotly_chart(fig_r, use_container_width=True)
 
         with col_right:
@@ -135,7 +135,7 @@ def main():
             }
             
             # 指標カードの生成（25% Enlarged Version）
-            for i, k in enumerate(AXES):
+            for i, k in enumerate(display_axes):
                 v1 = data["axes"].get(k, 0)  # 現在の資産（青）
                 v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None # 保存済み（オレンジ）
                 
