@@ -60,8 +60,10 @@ def fetch_frb_logic(name):
 # 🛢️ 2. コモディティ専用ロジック（Stooqからデータを取る）
 # --------------------------------------------------
 def fetch_commodity_logic(symbol, name):
+    
     try:
         # symbolをStooqが受け付けやすい形式（末尾 _f）に変換
+        mapping = {"cl.f": "cl.w", "ng.f": "ng.w", "gc.f": "gc.w", "si.f": "si.w", "hg.f": "hg.w"}
         stooq_symbol = symbol.lower().replace(".f", "_f")
         url = f"https://stooq.com/q/d/l/?s={stooq_symbol}&i=d"
         
