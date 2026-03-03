@@ -10,26 +10,6 @@ APP_TITLE = "Scoring Dashboard"
 FRB_AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
 COMMO_AXES = ["Annual Trajectory", "Relative Momentum", "Structural Stress", "Liquidity Energy", "Cycle Equilibrium"]
 
-    # 🚀 表示するラベルと解説を動的に決定
-            if symbol == "^TNX":
-                display_axes = FRB_AXES
-                descriptions = {
-                    "Future Focus": "Inflation Forecasting & Control",
-                    "Market Position": "Yield Stability & Curve Credibility",
-                    "Financial Strength": "Real Rate Cushion (Policy Ammo)",
-                    "Cashflow Quality": "M2 Money Supply Optimization",
-                    "People": "Natural Rate of Unemployment Target"
-                }
-            else:
-                display_axes = COMMO_AXES
-                descriptions = {
-                    "Annual Trajectory": "YoY Primary Trend & Long-term Supply-Demand Displacement",
-                    "Relative Momentum": "Short-term Overbought/Oversold Velocity & Price Impulse",
-                    "Structural Stress": "Volatility Regime Analysis & Market Fragility Index",
-                    "Liquidity Energy": "Volume-Weighted Capital Inflow & Transaction Integrity",
-                    "Cycle Equilibrium": "Mean Reversion Probability & Annual Range Positioning"
-                }
-
 def main():
     st.set_page_config(page_title=APP_TITLE, layout="wide")
     inject_css()
@@ -47,12 +27,39 @@ def main():
         {"name": "COPPER FUTURES", "symbol": "HG.F"}   # 卑金属：銅
     ]
     
-    options = [f"{s['name']} ({s['symbol']})" for s in top_5]
+    options = [f"{s['name']} ({s['symbol']})" for s in top_]
     target = st.selectbox("Select Asset", options)
     
     # 選択した銘柄の名前とシンボルを抽出
     name = target.rsplit(" (", 1)[0]
     symbol = next(s['symbol'] for s in top_5 if s['name'] == name)
+
+    # 選択した銘柄の名前とシンボルを抽出
+    name = target.rsplit(" (", 1)[0]
+    symbol = next(s['symbol'] for s in top_ if s['name'] == name)
+
+    # ✅ ここから挿入！
+    if symbol == "^TNX":
+        display_axes = FRB_AXES
+        descriptions = {
+            "Future Focus": "Inflation Forecasting & Control",
+            "Market Position": "Yield Stability & Curve Credibility",
+            "Financial Strength": "Real Rate Cushion (Policy Ammo)",
+            "Cashflow Quality": "M2 Money Supply Optimization",
+            "People": "Natural Rate of Unemployment Target"
+        }
+    else:
+        display_axes = COMMO_AXES
+        descriptions = {
+            "Annual Trajectory": "YoY Primary Trend & Long-term Supply-Demand Displacement",
+            "Relative Momentum": "Short-term Overbought/Oversold Velocity & Price Impulse",
+            "Structural Stress": "Volatility Regime Analysis & Market Fragility Index",
+            "Liquidity Energy": "Volume-Weighted Capital Inflow & Transaction Integrity",
+            "Cycle Equilibrium": "Mean Reversion Probability & Annual Range Positioning"
+        }
+    # ✅ ここまで挿入！
+
+    st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
 
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
 
