@@ -34,10 +34,6 @@ def main():
     name = target.rsplit(" (", 1)[0]
     symbol = next(s['symbol'] for s in top_ if s['name'] == name)
 
-    # 選択した銘柄の名前とシンボルを抽出
-    name = target.rsplit(" (", 1)[0]
-    symbol = next(s['symbol'] for s in top_ if s['name'] == name)
-
     # ✅ ここから挿入！
     if symbol == "^TNX":
         display_axes = FRB_AXES
@@ -58,9 +54,6 @@ def main():
             "Cycle Equilibrium": "Mean Reversion Probability & Annual Range Positioning"
         }
     # ✅ ここまで挿入！
-
-    st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
-
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
 
     # 比較ボタン
