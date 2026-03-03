@@ -55,15 +55,20 @@ def fetch_frb_logic(name):
     except Exception as e:
         st.error(f"FRB Logic Error: {e}")
         return None
-        
+
 # --------------------------------------------------
 # 🛢️ 2. コモディティ専用ロジック（Stooqからデータを取る）
 # --------------------------------------------------
 def fetch_commodity_logic(symbol, name):
     try:
-        url = f"https://stooq.com/q/d/l/?s={symbol.lower()}&i=d"
-        res = requests.get(url, timeout=20)
+        stooq_symbol = symbol.lower()
+        url = f"https://stooq.com/q/d/l/?s={stooq_symbol}&i=d"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        res = requests.get(url, headers=headers, timeout=20)
         res.raise_for_status()
+
+        if not res.text or "Date" not in res.text: return None
+        df = pd.read_csv(io.StringIO(res.text))
 
         df = pd.read_csv(io.StringIO(res.text))
         df["Date"] = pd.to_datetime(df["Date"])
