@@ -16,8 +16,10 @@ def main():
         st.session_state.saved_data = None
 
     # --- 🚀 厳選1資産固定ロジック（Global Macro版） ---
-    top_5 = [
+    top_ = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
+        
+
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
