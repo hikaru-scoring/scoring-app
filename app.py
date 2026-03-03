@@ -18,7 +18,12 @@ def main():
     # --- 🚀 厳選1資産固定ロジック（Global Macro版） ---
     top_ = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
-        
+        {"name": "WTI CRUDE OIL", "symbol": "CL.F"},    # エネルギー：原油
+        {"name": "NATURAL GAS", "symbol": "NG.F"},     # エネルギー：天然ガス
+        {"name": "GOLD FUTURES", "symbol": "GC.F"},    # 貴金属：金
+        {"name": "SILVER FUTURES", "symbol": "SI.F"},  # 貴金属：銀
+        {"name": "COPPER FUTURES", "symbol": "HG.F"}   # 卑金属：銅
+    ]
 
     ]
     
