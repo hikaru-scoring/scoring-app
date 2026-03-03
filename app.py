@@ -16,8 +16,6 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
-    # --- 🚀 厳選1資産固定ロジック（Global Macro版） ---
-    top_ = [
         # --- 🚀 世界の中央銀行 セレクション ---
     top_ = [
         {"name": "Federal Reserve (USA)", "symbol": "^TNX"},
@@ -26,7 +24,6 @@ def main():
         {"name": "Bank of England (UK)", "symbol": "UK"},
         {"name": "Bank of Canada (CAN)", "symbol": "CAN"},
         {"name": "Reserve Bank of Australia (AUS)", "symbol": "AUS"}
-    ]
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_]
