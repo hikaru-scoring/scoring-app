@@ -8,7 +8,6 @@ APP_TITLE = "Scoring Dashboard"
 # 冒頭 9行目付近
 # --- 指標定義（FRB用とコモディティ用） ---
 FRB_AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
-COMMO_AXES = ["Annual Trajectory", "Relative Momentum", "Structural Stress", "Liquidity Energy", "Cycle Equilibrium"]
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout="wide")
@@ -20,11 +19,6 @@ def main():
     # --- 🚀 厳選1資産固定ロジック（Global Macro版） ---
     top_ = [
         {"name": "US 10Y Yield", "symbol": "^TNX"},
-        {"name": "WTI CRUDE OIL", "symbol": "CL.F"},    # エネルギー：原油
-        {"name": "NATURAL GAS", "symbol": "NG.F"},     # エネルギー：天然ガス
-        {"name": "GOLD FUTURES", "symbol": "GC.F"},    # 貴金属：金
-        {"name": "SILVER FUTURES", "symbol": "SI.F"},  # 貴金属：銀
-        {"name": "COPPER FUTURES", "symbol": "HG.F"}   # 卑金属：銅
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_]
@@ -43,15 +37,6 @@ def main():
             "Financial Strength": "Real Rate Cushion (Policy Ammo)",
             "Cashflow Quality": "M2 Money Supply Optimization",
             "People": "Natural Rate of Unemployment Target"
-        }
-    else:
-        display_axes = COMMO_AXES
-        descriptions = {
-            "Annual Trajectory": "YoY Primary Trend & Long-term Supply-Demand Displacement",
-            "Relative Momentum": "Short-term Overbought/Oversold Velocity & Price Impulse",
-            "Structural Stress": "Volatility Regime Analysis & Market Fragility Index",
-            "Liquidity Energy": "Volume-Weighted Capital Inflow & Transaction Integrity",
-            "Cycle Equilibrium": "Mean Reversion Probability & Annual Range Positioning"
         }
     # ✅ ここまで挿入！
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
