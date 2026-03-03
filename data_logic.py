@@ -109,7 +109,6 @@ def fetch_commodity_logic(symbol, name):
 # --------------------------------------------------
 # 📡 3. ルーター（受付窓口：app.pyからはここだけを呼ぶ）
 # --------------------------------------------------
-@st.cache_data(ttl=86400)
 def fetch_data(symbol, name):
     if symbol == "^TNX":
         return fetch_frb_logic(name)
