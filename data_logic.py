@@ -12,7 +12,7 @@ def fetch_central_bank_data(symbol, name):
         if symbol == "^TNX":  # USA
             ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}
         elif symbol == "JPN":  # Japan
-            ids = {"cpi": "CPALTT01JPM657N", "10y": "IRLTLT01JPM156N", "2y": "IR3TIB01JPM156N", "m2": "MABMM301EZM189S", "rate": "LRUNTTTTJPM156S", "unrate": "LRHUTTTTEZM156S"}
+            ids = {"cpi": "CPALTT01JPM657N", "10y": "IRLTLT01JPM156N", "2y": "IR3TIB01JPM156N", "m2": "MABMM301JPM189S", "rate": "LRUNTTTTJPM156S", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "EZ":   # Eurozone
             ids = {"cpi": "CP0000EZ19M086NEST", "10y": "IRLTLT01EZM156N", "2y": "INTDSRRZM193N", "m2": "MANMM101EZM189S", "rate": "ECBDFR", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "UK":   # UK
@@ -34,7 +34,7 @@ def fetch_central_bank_data(symbol, name):
         raw_unrate = fred.get_series(ids["unrate"])
 
         # 計算
-        cpi_yoy = raw_cpi.pct_change(12).iloc[-1] * 100
+        cpi_yoy = raw_cpi.pct_change(12).dropna().iloc[-1] * 100
         cpi_score = max(0, 200 - abs(cpi_yoy - 2.0) * 50)
         future_focus_score = int(cpi_score) # CPIスコアをそのまま使用
         
@@ -44,7 +44,7 @@ def fetch_central_bank_data(symbol, name):
         curve_score = max(0, min(100, 100 + (curve_gap * 100)))
         market_pos_score = int(stability_score + curve_score)
 
-        m2_yoy = raw_m2.pct_change(12).iloc[-1] * 100
+        m2_yoy = raw_m2.pct_change(12).dropna().iloc[-1] * 100
         cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 30))
         real_rate = raw_rate.iloc[-1] - cpi_yoy
         fin_strength_score = int(max(0, min(200, real_rate * 50)))
