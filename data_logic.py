@@ -34,7 +34,7 @@ def fetch_central_bank_data(symbol, name):
         raw_unrate = fred.get_series(ids["unrate"])
 
         # 計算
-        cpi_yoy = raw_cpi.pct_change(12).dropna().iloc[-1] * 100
+        cpi_yoy = raw_cpi.pct_change(12).iloc[-1] * 100
         cpi_score = max(0, 200 - abs(cpi_yoy - 2.0) * 50)
         future_focus_score = int(cpi_score) # CPIスコアをそのまま使用
         
