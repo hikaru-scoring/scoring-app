@@ -34,39 +34,28 @@ def main():
     symbol = next(s['symbol'] for s in top_ if s['name'] == name)
 
     # ✅ ここから挿入！
-    if symbol == "^TNX":
-        display_axes = FRB_AXES
-        descriptions = {
-            "Future Focus": "Inflation Forecasting & Control",
-            "Market Position": "Yield Stability & Curve Credibility",
-            "Financial Strength": "Real Rate Cushion (Policy Ammo)",
-            "Cashflow Quality": "M2 Money Supply Optimization",
-            "People": "Natural Rate of Unemployment Target"
-        }
+    display_axes = FRB_AXES
+    descriptions = {
+        "Future Focus": "Inflation Forecasting & Control",
+        "Market Position": "Yield Stability & Curve Credibility",
+        "Financial Strength": "Real Rate Cushion (Policy Ammo)",
+        "Cashflow Quality": "M2 Money Supply Optimization",
+        "People": "Natural Rate of Unemployment Target"
+    }
     # ✅ ここまで挿入！
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
 
     # 比較ボタン
     c1, c2, c3, _ = st.columns([1.2, 1.2, 1.5, 3])
-    save_it = c1.button("💾 SAVE COMPANY")
-    clear_it = c2.button("🗑️ CLEAR")
-    compare_oil = c3.button("🛢️ COMPARE WITH OIL")
+    compare_jpn = c3.button("🇯🇵 COMPARE WITH BOJ")
 
     # 2. メイン銘柄のデータ取得
     data = fetch_data(symbol, name)
 
     if data:
-        # 3. ボタンごとの動作設定
-        if save_it: 
-            st.session_state.saved_data = data
-            st.rerun()
-        if clear_it: 
-            st.session_state.saved_data = None
-            st.rerun()
-        if compare_oil:
-            # data_logic.pyから原油データを呼んでくる
-            from data_logic import fetch_oil_data 
-            st.session_state.saved_data = fetch_oil_data()
+        if compare_jpn:
+            from data_logic import fetch_jpn_data 
+            st.session_state.saved_data = fetch_jpn_data()
             st.rerun()
 
         # 1. 総合点数（中央上部）
