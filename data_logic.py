@@ -26,7 +26,7 @@ def fetch_central_bank_data(symbol, name):
 
         # --- データの取得 ---
         # 共通して取得する（CPIとM2は少し長めに取る）
-        raw_cpi = fred.get_series(ids["cpi"], observation_start='2023-01-01')
+        raw_cpi = fred.get_series(ids["cpi"], observation_start='2022-01-01')
         raw_10y = fred.get_series(ids["10y"])
         raw_2y = fred.get_series(ids["2y"])
         raw_m2 = fred.get_series(ids["m2"], observation_start='2022-01-01')
