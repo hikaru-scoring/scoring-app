@@ -16,7 +16,7 @@ def fetch_central_bank_data(symbol, name):
         elif symbol == "EZ":   # Eurozone
             ids = {"cpi": "CP0000EZ19M086NEST", "10y": "IRLTLT01EZM156N", "2y": "IR3TIB01EZM156N", "m2": "MABMM301EZM189S", "rate": "ECBDFR", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "UK":   # UK
-            ids = {"cpi": "GBRCPIALLMINMEI", "10y": "IRLTLT01GBM156N", "2y": "IR3TIB01GBM156N", "m2": "MABMM301GBM189S", "rate": "BOERUKM", "unrate": "LRHUTTTTGBM156S"}
+            ids = {"cpi": "GBRCPIALLMINMEI", "10y": "IRLTLT01GBM156N", "2y": "IR3TIB01GBM156N", "m2": "MABMM301GBM189S", "rate": "IR3TIB01GBM156N", "unrate": "LRHUTTTTGBM156S"}
         elif symbol == "CAN":  # Canada
             ids = {"cpi": "CPALTT01CAM657N", "10y": "IRLTLT01CAM156N", "2y": "IR3TIB01CAM156N", "m2": "MABMM301CAM189S", "rate": "IRSTCB01CAM156N", "unrate": "LRUNTTTTCAM156S"}
         elif symbol == "AUS":  # Australia
