@@ -12,7 +12,7 @@ def fetch_central_bank_data(symbol, name):
         if symbol == "^TNX":  # USA
             ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}
         elif symbol == "JPN":  # Japan
-            ids = {"cpi": "CPALTT01JPM657N", "10y": "IR3TIB01EZM156N", "2y": "IR3TIB01EZM156N", "m2": "MABMM301EZM189S", "rate": "LRUNTTTTJPM156S", "unrate": "LRHUTTTTEZM156S"}
+            ids = {"cpi": "CPALTT01JPM657N", "10y": "IRLTLT01JPM156N", "2y": "IR3TIB01JPM156N", "m2": "MABMM301EZM189S", "rate": "LRUNTTTTJPM156S", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "EZ":   # Eurozone
             ids = {"cpi": "CP0000EZ19M086NEST", "10y": "IRLTLT01EZM156N", "2y": "INTDSRRZM193N", "m2": "MANMM101EZM189S", "rate": "ECBDFR", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "UK":   # UK
@@ -35,7 +35,9 @@ def fetch_central_bank_data(symbol, name):
 
         # 計算
         cpi_yoy = raw_cpi.pct_change(12).iloc[-1] * 100
-        cpi_score = max(0, 200 - abs(cpi_yoy - 2.0) * 50)
+        cpi_trend = raw_cpi.pct_change(12).dropna().tail(3).mean() * 100
+        trend_bonus = max(-50, min(50, (2 - cpi_trend) * 10))
+        cpi_score = max(0, min(200, 200 - abs(cpi_yoy - 2.0) * 50 + trend_bonus))
         future_focus_score = int(cpi_score) # CPIスコアをそのまま使用
         
         yield_vol = raw_10y.diff().tail(20).std()
