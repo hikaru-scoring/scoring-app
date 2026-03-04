@@ -12,15 +12,15 @@ def fetch_central_bank_data(symbol, name):
         if symbol == "^TNX":  # USA
             ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}
         elif symbol == "JPN":  # Japan
-            ids = {"cpi": "JPNCPIALLMINMEI", "10y": "IRLTLT01JPM156N", "2y": "INTDSRJPM193N", "m2": "MYAGM2JPM189N", "rate": "INTDSRJPM193N", "unrate": "LRUN74TTJPM156S"}
+            ids = {"cpi": "CPALTT01JPM657N", "10y": "IR3TIB01EZM156N", "2y": "IR3TIB01EZM156N", "m2": "MABMM301EZM189S", "rate": "LRUNTTTTJPM156S", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "EZ":   # Eurozone
-            ids = {"cpi": "CPHPTT01EZM661N", "10y": "IRLTLT01EZM156N", "2y": "INTDSRRZM193N", "m2": "MANMM101EZM189S", "rate": "INTDSRRZM193N", "unrate": "LRHUTTTTEZM156S"}
+            ids = {"cpi": "CP0000EZ19M086NEST", "10y": "IRLTLT01EZM156N", "2y": "INTDSRRZM193N", "m2": "MANMM101EZM189S", "rate": "ECBDFR", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "UK":   # UK
-            ids = {"cpi": "GBRCPIALLMINMEI", "10y": "IRLTLT01GBM156N", "2y": "INTDSRGBM193N", "m2": "MYAGM2GBM189N", "rate": "INTDSRGBM193N", "unrate": "LRUN74TTGBM156S"}
+            ids = {"cpi": "GBRCPIALLMINMEI", "10y": "IRLTLT01GBM156N", "2y": "IR3TIB01GBM156N", "m2": "MABMM301GBM189S", "rate": "BOERUKM", "unrate": "LRHUTTTTGBM156S"}
         elif symbol == "CAN":  # Canada
-            ids = {"cpi": "CPALTT01CAM659N", "10y": "IRLTLT01CAM156N", "2y": "INTDSRCAM193N", "m2": "MANMM101CAM189S", "rate": "INTDSRCAM193N", "unrate": "LRUN74TTCAM156S"}
+            ids = {"cpi": "CPALTT01CAM657N", "10y": "IRLTLT01CAM156N", "2y": "IR3TIB01CAM156N", "m2": "MABMM301CAM189S", "rate": "IRSTCB01CAM156N", "unrate": "LRUNTTTTCAM156S"}
         elif symbol == "AUS":  # Australia
-            ids = {"cpi": "CPALTT01AUM659N", "10y": "IRLTLT01AUM156N", "2y": "INTDSRAUM193N", "m2": "MANMM101AUM189S", "rate": "INTDSRAUM193N", "unrate": "LRUN74TTAUM156S"}
+            ids = {"cpi": "AUSCPIALLQINMEI", "10y": "IRLTLT01AUM156N", "2y": "IR3TIB01AUM156N", "m2": "MABMM301AUM189S", "rate": "IR3TIB01AUM156N", "unrate": "LRUNTTTTAUM156S"}
         else:
             return None
 
