@@ -12,7 +12,7 @@ def fetch_central_bank_data(symbol, name):
         if symbol == "^TNX":  # USA
             ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}
         elif symbol == "JPN":  # Japan
-            ids = {"cpi": "CPALTT01JPM657N", "10y": "IRLTLT01JPM156N", "2y": "IR3TIB01JPM156N", "m2": "MABMM301JPM189S", "rate": "IR3TIB01JPM156N", "unrate": "LRHUTTTTEZM156S"}
+            ids = {"cpi": "JPNCPIALLMINMEI", "10y": "IRLTLT01JPM156N", "2y": "IR3TIB01JPM156N", "m2": "MABMM301JPM189S", "rate": "IR3TIB01JPM156N", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "EZ":   # Eurozone
             ids = {"cpi": "CP0000EZ19M086NEST", "10y": "IRLTLT01EZM156N", "2y": "INTDSRRZM193N", "m2": "MANMM101EZM189S", "rate": "ECBDFR", "unrate": "LRHUTTTTEZM156S"}
         elif symbol == "UK":   # UK
