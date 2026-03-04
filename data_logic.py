@@ -35,9 +35,7 @@ def fetch_central_bank_data(symbol, name):
 
         # 計算
         cpi_yoy = raw_cpi.pct_change(12).iloc[-1] * 100
-        cpi_trend = raw_cpi.pct_change(12).dropna().tail(3).mean() * 100
-        trend_bonus = max(-50, min(50, (2 - cpi_trend) * 10))
-        cpi_score = max(0, min(200, 200 - abs(cpi_yoy - 2.0) * 50 + trend_bonus))
+        cpi_score = max(0, 200 - abs(cpi_yoy - 2.0) * 50)
         future_focus_score = int(cpi_score) # CPIスコアをそのまま使用
         
         yield_vol = raw_10y.diff().tail(20).std()
