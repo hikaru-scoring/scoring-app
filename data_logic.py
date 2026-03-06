@@ -13,7 +13,7 @@ def fetch_central_bank_data(symbol, name):
         # --- 日本（JPN）の場合：日銀API直結 ---
         if symbol == "JPN":
             # 日銀APIから5つの指標を直接取得
-            df_rate = fetch_boj_data("FM01", "STRDCLUCON")       # 政策金利
+            df_rate = fetch_boj_data("FM01", "STRDCLCUCON")
             df_cpi = fetch_boj_data("PR01", "PR01_CPI2020GY00") # CPI
             df_10y = fetch_boj_data("IR01", "IR01_JGB10Y@D")    # 10年債
             df_2y = fetch_boj_data("IR01", "IR01_JGB2Y@D")      # 2年債
