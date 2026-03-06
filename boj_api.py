@@ -20,12 +20,20 @@ def fetch_boj_data(db_name, series_code, start_date="202401"):
         response.raise_for_status()
         data = response.json()
 
-        # 日銀JSONの階層を掘り進んでデータ部分を抽出
-        # data -> data (list) -> [0] -> values (list)
-        values = data["RESULTSET"]["VALUES"]
+        # 日銀APIの実際の構造に合わせて抽出
+        data_list = data.get('data', [])
+        if not data_list:
+            return pd.DataFrame()
 
-        dates = values["SURVEY_DATES"]
-        obs = values["OBS_VALUE"]
+        # 最初のデータ系列から日付(period)と数値(value)を取得
+        values = data_list[0].get('values', [])
+        df = pd.DataFrame(values)
+
+        if df.empty:
+            return pd.DataFrame()
+
+        # カラム名を統一（日銀のキーは 'period' と 'value' です）
+        df = df.rename(columns={'period': 'date'})
 
         df = pd.DataFrame({
             "date": dates,
