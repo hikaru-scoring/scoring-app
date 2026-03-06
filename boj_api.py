@@ -21,12 +21,15 @@ def fetch_boj_data(db_name, series_code, start_date="202401"):
 
         # 日銀JSONの階層を掘り進んでデータ部分を抽出
         # data -> data (list) -> [0] -> values (list)
-        data_list = data.get('data', [])
-        if not data_list:
-            return pd.DataFrame()
+        values = data["RESULTSET"]["VALUES"]
 
-        values = data_list[0].get('values', [])
-        df = pd.DataFrame(values)
+        dates = values["SURVEY_DATES"]
+        obs = values["OBS_VALUE"]
+
+        df = pd.DataFrame({
+            "date": dates,
+            "value": obs
+        })
 
         if df.empty:
             return pd.DataFrame()
