@@ -57,10 +57,10 @@ def fetch_central_bank_data(symbol, name):
         # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
         if symbol == "JPN":
             # 日銀APIから金融・市場指標を取得
-            df_rate = fetch_boj_data("FM01", "STRDCLUCON")
-            df_10y = fetch_boj_data("IR01", "IR01_JGB10Y@D")
-            df_2y = fetch_boj_data("IR01", "IR01_JGB2Y@D")
-            df_m2 = fetch_boj_data("MA01", "MA01_M2AGY00")
+            df_rate = fetch_boj_data("IR", "IR3TIB01JPM156N")
+            df_10y = fetch_boj_data("IR", "IRLTLT01JPM156N")
+            df_2y = fetch_boj_data("IR", "IR3TIB01JPM156N")
+            df_m2 = fetch_boj_data("MA", "MABMM301JPM189S")
 
             # ★ 物価(CPI)と雇用(失業率)は総務省(e-Stat)から直接取得
             # 0003423127: 消費者物価指数 / 0003007513: 労働力調査
