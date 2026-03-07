@@ -1,17 +1,16 @@
-#boj_api.py
 import requests
 import pandas as pd
-import streamlit as st
 
-def fetch_boj_data(db_name, series_code, start_date="201001"):
-    """
-    日本銀行APIから直接データを取得し、日付と数値のDataFrameを返す関数。
-    """
-    base_url = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
+def fetch_boj_data(db_name, series_code, start_date="202301"):
+    # URLを日銀の「時系列統計データ検索サイト」専用に固定
+    base_url = "https://www.stat-search.boj.or.jp/api/v1/getDataCode"
+    
     params = {
-        "appId": st.secrets["ESTAT_APP_ID"],
-        "statsDataId": "00200573",
-        "cdCat01": "1000000000"
+        "format": "json",
+        "lang": "jp",
+        "db": db_name,
+        "code": series_code,
+        "startDate": start_date
     }
 
     try:
@@ -19,44 +18,26 @@ def fetch_boj_data(db_name, series_code, start_date="201001"):
         response.raise_for_status()
         data = response.json()
 
-        # 日銀APIの実際の構造に合わせて抽出
+        # 日銀特有の JSON 構造（data -> values）から抜き出す
         data_list = data.get('data', [])
         if not data_list:
-            return pd.DataFrame()
+            return pd.DataFrame(columns=['date', 'value'])
 
-        # 最初のデータ系列から日付(period)と数値(value)を取得
         values = data_list[0].get('values', [])
         df = pd.DataFrame(values)
 
         if df.empty:
-            return pd.DataFrame()
+            return pd.DataFrame(columns=['date', 'value'])
 
-        # カラム名を統一（日銀のキーは 'period' と 'value' です）
-        df = df.rename(columns={'period': 'date'})
-
-        df = pd.DataFrame({
-            "date": dates,
-            "value": obs
-        })
-
-        if df.empty:
-            return pd.DataFrame()
-
-        # --- 修正箇所：日銀データの安全な処理 ---
-        # まず period を date に変える
+        # period を date に、数値を value に整理
         df = df.rename(columns={'period': 'date'})
         
-        # 'value' 列がない、またはデータが空の場合のガード
-        if 'value' not in df.columns or df['value'].empty:
-            return pd.DataFrame(columns=['date', 'value'])
-            
-        # 数値型に変換
+        # 数値変換（日銀のデータは文字列なので必須）
         df['value'] = pd.to_numeric(df['value'], errors='coerce')
-        return df[['date', 'value']]
-        # --- 修正ここまで ---
-    
-        return df
+        
+        # 最後に、Scoringに必要な「日付」と「数値」の列だけを返す
+        return df[['date', 'value']].dropna()
 
     except Exception as e:
         print(f"日銀API取得エラー ({series_code}): {e}")
-        return pd.DataFrame()
+        return pd.DataFrame(columns=['date', 'value'])
