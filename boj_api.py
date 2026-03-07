@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import streamlit as st
 
-def fetch_boj_data(db_name, series_code, start_date="202001"):
+def fetch_boj_data(db_name, series_code, start_date="201001"):
     """
     日本銀行APIから直接データを取得し、日付と数値のDataFrameを返す関数。
     """
