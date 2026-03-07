@@ -54,15 +54,15 @@ def fetch_central_bank_data(symbol, name):
 
             # ★ 物価(CPI)と雇用(失業率)は総務省(e-Stat)から直接取得
             # 0003423127: 消費者物価指数 / 0003007513: 労働力調査
-            raw_cpi = fetch_estat_data("0003423127", cd_cat01="0001") # 総合
-            raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 完全失業率
+            raw_cpi = fetch_estat_data("00200573", cd_cat01="1000000000")
+            raw_unrate = fetch_estat_data("00200524")
 
             # 日銀データの変換（Series化）
             raw_rate = pd.Series(df_rate['value'].values, index=pd.to_datetime(df_rate['date']))
             raw_10y = pd.Series(df_10y['value'].values, index=pd.to_datetime(df_10y['date']))
             raw_2y = pd.Series(df_2y['value'].values, index=pd.to_datetime(df_2y['date']))
             raw_m2 = pd.Series(df_m2['value'].values, index=pd.to_datetime(df_m2['date']))
-            
+
         else:
             if symbol == "^TNX":  # USA
                 ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}    
