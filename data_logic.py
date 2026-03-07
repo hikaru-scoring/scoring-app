@@ -17,10 +17,20 @@ def fetch_estat_data(stats_data_id, cd_cat01=None):
         response = requests.get(url, params=params)
         data = response.json()
         # --- 修正箇所：e-Statのデータ抽出 ---
-        # 階層を一つずつ安全に掘り進めます
-        stats_list = data.get("GET_STATS_DATA", {}).get("STATISTICAL_DATA", {})
-        data_inf = stats_list.get("DATA_INF", {})
-        values = data_inf.get("VALUE", [])
+        # 1. ルートを取得
+        root = data.get("GET_STATS_DATA", {})
+        
+        # 2. そもそも成功したか確認（RESULT を見るのが仕様書流）
+        if root.get("RESULT", {}).get("STATUS") != 0:
+            return pd.Series(dtype='float64')
+
+        # 3. データを掘る
+        stat_data = root.get("STATISTICAL_DATA", {})
+        values = stat_data.get("DATA_INF", {}).get("VALUE", [])
+
+        # 4. 1件（辞書）でも複数（リスト）でも DataFrame にできるようにする
+        if isinstance(values, dict):
+            values = [values]
 
         if not values:
             st.error(f"データが見つかりません: {stats_data_id}")
@@ -54,8 +64,9 @@ def fetch_central_bank_data(symbol, name):
 
             # ★ 物価(CPI)と雇用(失業率)は総務省(e-Stat)から直接取得
             # 0003423127: 消費者物価指数 / 0003007513: 労働力調査
-            raw_cpi = fetch_estat_data("0003427113", cd_cat01="1000000000")
-            raw_unrate = fetch_estat_data("00200524")
+            # 0003423127: CPI(2020年基準)月次 / 0003007513: 労働力調査(失業率)月次
+            raw_cpi = fetch_estat_data("0003423127", cd_cat01="0001") # 0001は「総合」
+            raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 01は「完全失業率」
 
             # 日銀データの変換（Series化）
             raw_rate = pd.Series(df_rate['value'].values, index=pd.to_datetime(df_rate['date']))
