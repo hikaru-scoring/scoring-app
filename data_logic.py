@@ -54,7 +54,7 @@ def fetch_central_bank_data(symbol, name):
 
             # ★ 物価(CPI)と雇用(失業率)は総務省(e-Stat)から直接取得
             # 0003423127: 消費者物価指数 / 0003007513: 労働力調査
-            raw_cpi = fetch_estat_data("00200573", cd_cat01="1000000000")
+            raw_cpi = fetch_estat_data("0003427113", cd_cat01="1000000000")
             raw_unrate = fetch_estat_data("00200524")
 
             # 日銀データの変換（Series化）
