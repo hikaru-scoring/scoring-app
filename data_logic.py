@@ -3,6 +3,31 @@ import pandas as pd
 import streamlit as st
 from fredapi import Fred
 from boj_api import fetch_boj_data
+import requests
+
+# --- e-Stat API取得用の関数を新規追加 ---
+def fetch_estat_data(stats_data_id, cd_cat01=None):
+    app_id = st.secrets["ESTAT_APP_ID"]
+    url = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
+    params = {"appId": app_id, "statsDataId": stats_data_id, "metaGetFlg": "Y", "cntGetFlg": "N"}
+    if cd_cat01:
+        params["cdCat01"] = cd_cat01
+
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        values = data["GET_STATS_DATA"]["STATISTICAL_DATA"]["DATA_INF"]["VALUE"]
+        df = pd.DataFrame(values)
+        df = df.rename(columns={"@time": "date", "$": "value"})
+        df["value"] = pd.to_numeric(df["value"], errors="coerce")
+        # e-Statの月次(YYYYMM)を日付型に変換
+        series = pd.Series(df["value"].values, index=pd.to_datetime(df["date"], format="%Y%m", errors='coerce'))
+        return series.sort_index()
+    except Exception as e:
+        st.error(f"e-Stat Error ({stats_data_id}): {e}")
+        return pd.Series(dtype='float64')
+
+# この下に既存の @st.cache_data が続く...
 
 @st.cache_data(ttl=86400)
 def fetch_central_bank_data(symbol, name):
@@ -10,18 +35,21 @@ def fetch_central_bank_data(symbol, name):
         fred_key = st.secrets["FRED_API_KEY"]
         fred = Fred(api_key=fred_key)
 
-        # --- 日本（JPN）の場合：日銀API直結 ---
+        # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
         if symbol == "JPN":
-            # 日銀APIから5つの指標を直接取得
+            # 日銀APIから金融・市場指標を取得
             df_rate = fetch_boj_data("FM01", "STRDCLUCON")
-            df_cpi = fetch_boj_data("PR01", "PR01_CPI2020GY00") # CPI
-            df_10y = fetch_boj_data("IR01", "IR01_JGB10Y@D")    # 10年債
-            df_2y = fetch_boj_data("IR01", "IR01_JGB2Y@D")      # 2年債
-            df_m2 = fetch_boj_data("MA01", "MA01_M2AGY00")      # M2
+            df_10y = fetch_boj_data("IR01", "IR01_JGB10Y@D")
+            df_2y = fetch_boj_data("IR01", "IR01_JGB2Y@D")
+            df_m2 = fetch_boj_data("MA01", "MA01_M2AGY00")
 
-            # 既存の計算ロジック（Series型）に合わせるための変換
+            # ★ 物価(CPI)と雇用(失業率)は総務省(e-Stat)から直接取得
+            # 0003423127: 消費者物価指数 / 0003007513: 労働力調査
+            raw_cpi = fetch_estat_data("0003423127", cd_cat01="0001") # 総合
+            raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 完全失業率
+
+            # 日銀データの変換（Series化）
             raw_rate = pd.Series(df_rate['value'].values, index=pd.to_datetime(df_rate['date']))
-            raw_cpi = pd.Series(df_cpi['value'].values, index=pd.to_datetime(df_cpi['date']))
             raw_10y = pd.Series(df_10y['value'].values, index=pd.to_datetime(df_10y['date']))
             raw_2y = pd.Series(df_2y['value'].values, index=pd.to_datetime(df_2y['date']))
             raw_m2 = pd.Series(df_m2['value'].values, index=pd.to_datetime(df_m2['date']))
