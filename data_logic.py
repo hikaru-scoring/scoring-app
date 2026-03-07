@@ -16,7 +16,16 @@ def fetch_estat_data(stats_data_id, cd_cat01=None):
     try:
         response = requests.get(url, params=params)
         data = response.json()
-        values = data["GET_STATS_DATA"]["STATISTICAL_DATA"]["DATA_INF"]["VALUE"]
+        # --- 修正箇所：e-Statのデータ抽出 ---
+        # 階層を一つずつ安全に掘り進めます
+        stats_list = data.get("GET_STATS_DATA", {}).get("STATISTICAL_DATA", {})
+        data_inf = stats_list.get("DATA_INF", {})
+        values = data_inf.get("VALUE", [])
+
+        if not values:
+            st.error(f"データが見つかりません: {stats_data_id}")
+            return pd.Series(dtype='float64')
+        # --- 修正ここまで ---
         df = pd.DataFrame(values)
         df = df.rename(columns={"@time": "date", "$": "value"})
         df["value"] = pd.to_numeric(df["value"], errors="coerce")
