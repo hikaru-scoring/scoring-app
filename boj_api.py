@@ -6,13 +6,11 @@ def fetch_boj_data(db_name, series_code, start_date="202401"):
     """
     日本銀行APIから直接データを取得し、日付と数値のDataFrameを返す関数。
     """
-    base_url = "https://www.stat-search.boj.or.jp/api/v1/getDataCode"
+    base_url = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
     params = {
-        "format": "json",
-        "lang": "jp",
-        "db": db_name,
-        "code": series_code,
-        "startDate": start_date
+        "appId": ESTAT_APP_ID,
+        "statsDataId": "00200573",
+        "cdCat01": "1000000000"
     }
 
     try:
