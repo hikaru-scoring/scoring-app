@@ -43,13 +43,19 @@ def fetch_boj_data(db_name, series_code, start_date="202401"):
         if df.empty:
             return pd.DataFrame()
 
-        # Scoringで使いやすいようにカラム名を統一
-        # 日銀のレスポンスは 'period' (日付) と 'value' (数値)
-        df = df.rename(columns={'period': 'date', 'value': 'value'})
+        # --- 修正箇所：日銀データの安全な処理 ---
+        # まず period を date に変える
+        df = df.rename(columns={'period': 'date'})
         
-        # 数値型に変換（日銀のデータは文字列で来るため）
+        # 'value' 列がない、またはデータが空の場合のガード
+        if 'value' not in df.columns or df['value'].empty:
+            return pd.DataFrame(columns=['date', 'value'])
+            
+        # 数値型に変換
         df['value'] = pd.to_numeric(df['value'], errors='coerce')
-        
+        return df[['date', 'value']]
+        # --- 修正ここまで ---
+    
         return df
 
     except Exception as e:
