@@ -1,6 +1,7 @@
 #boj_api.py
 import requests
 import pandas as pd
+import streamlit as st
 
 def fetch_boj_data(db_name, series_code, start_date="202401"):
     """
@@ -8,7 +9,7 @@ def fetch_boj_data(db_name, series_code, start_date="202401"):
     """
     base_url = "https://api.e-stat.go.jp/rest/3.0/app/json/getStatsData"
     params = {
-        "appId": ESTAT_APP_ID,
+        "appId": st.secrets["ESTAT_APP_ID"],
         "statsDataId": "00200573",
         "cdCat01": "1000000000"
     }
