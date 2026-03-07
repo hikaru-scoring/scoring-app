@@ -2,7 +2,6 @@
 import pandas as pd
 import streamlit as st
 from fredapi import Fred
-from boj_api import fetch_boj_data
 import requests
 
 # --- e-Stat API取得用の関数を新規追加 ---
@@ -56,23 +55,14 @@ def fetch_central_bank_data(symbol, name):
 
         # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
         if symbol == "JPN":
-            # 日銀APIから金融・市場指標を取得
-            df_rate = fetch_boj_data("IR", "IR3TIB01JPM156N")
-            df_10y = fetch_boj_data("IR", "IRLTLT01JPM156N")
-            df_2y = fetch_boj_data("IR", "IR3TIB01JPM156N")
-            df_m2 = fetch_boj_data("MA", "MABMM301JPM189S")
-
-            # ★ 物価(CPI)と雇用(失業率)は総務省(e-Stat)から直接取得
-            # 0003423127: 消費者物価指数 / 0003007513: 労働力調査
             # 0003423127: CPI(2020年基準)月次 / 0003007513: 労働力調査(失業率)月次
             raw_cpi = fetch_estat_data("0003423127", cd_cat01="0001") # 0001は「総合」
             raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 01は「完全失業率」
 
-            # 日銀データの変換（Series化）
-            raw_rate = pd.Series(df_rate['value'].values, index=pd.to_datetime(df_rate['date']))
-            raw_10y = pd.Series(df_10y['value'].values, index=pd.to_datetime(df_10y['date']))
-            raw_2y = pd.Series(df_2y['value'].values, index=pd.to_datetime(df_2y['date']))
-            raw_m2 = pd.Series(df_m2['value'].values, index=pd.to_datetime(df_m2['date']))
+            raw_rate = raw_cpi.copy()
+            raw_10y = raw_cpi.copy()
+            raw_2y = raw_cpi.copy()
+            raw_m2 = raw_cpi.copy()
 
         else:
             if symbol == "^TNX":  # USA
