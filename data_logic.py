@@ -63,8 +63,6 @@ def fetch_central_bank_data(symbol, name):
             raw_2y = pd.Series(df_2y['value'].values, index=pd.to_datetime(df_2y['date']))
             raw_m2 = pd.Series(df_m2['value'].values, index=pd.to_datetime(df_m2['date']))
             
-            # 失業率(unrate)だけは日銀APIにないので、FREDから取得
-            raw_unrate = fetch_estat_data("0003007513", cd_cat01="01")
         else:
             if symbol == "^TNX":  # USA
                 ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}    
