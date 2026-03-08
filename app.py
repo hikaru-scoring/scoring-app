@@ -19,6 +19,7 @@ def main():
         # --- 🚀 世界の中央銀行 セレクション ---
     top_ = [
         {"name": "Federal Reserve (USA)", "symbol": "^TNX"},
+        {"name": "Monetary Authority of Singapore (SGP)", "symbol": "SGP"},
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_]
