@@ -39,7 +39,10 @@ def fetch_estat_data(stats_data_id, cd_cat01=None):
         df = df.rename(columns={"@time": "date", "$": "value"})
         df["value"] = pd.to_numeric(df["value"], errors="coerce")
         # e-Statの月次(YYYYMM)を日付型に変換
-        series = pd.Series(df["value"].values, index=pd.to_datetime(df["date"], format="%Y%m", errors='coerce'))
+        series = pd.Series(
+            df["value"].values,
+            index=pd.to_datetime(df["date"].astype(str).str.replace("M",""), format="%Y%m", errors="coerce")
+        )
         return series.sort_index()
     except Exception as e:
         st.error(f"e-Stat Error ({stats_data_id}): {e}")
