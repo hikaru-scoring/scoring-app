@@ -69,11 +69,6 @@ def fetch_central_bank_data(symbol, name):
             raw_cpi = fetch_estat_data("0003427113", cd_cat01="0001")  # 総合
             raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 01は「完全失業率」
 
-            raw_rate = raw_cpi.copy()
-            raw_10y = raw_cpi.copy()
-            raw_2y = raw_cpi.copy()
-            raw_m2 = raw_cpi.copy()
-
         else:
             if symbol == "^TNX":  # USA
                 ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}    
