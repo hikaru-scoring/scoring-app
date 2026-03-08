@@ -39,6 +39,10 @@ def fetch_estat_data(stats_data_id, cd_cat01=None):
             return pd.Series(dtype='float64')
         # --- 修正ここまで ---
         df = pd.DataFrame(values)
+        
+        if "@time" not in df.columns or "$" not in df.columns:
+            raise KeyError(f"VALUEに @time または $ がありません。statsDataId={stats_data_id} は時系列表ですか？")
+
         df = df.rename(columns={"@time": "date", "$": "value"})
         df["value"] = pd.to_numeric(df["value"], errors="coerce")
         # e-Statの月次(YYYYMM)を日付型に変換
@@ -61,9 +65,8 @@ def fetch_central_bank_data(symbol, name):
 
         # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
         if symbol == "JPN":
-            # 0003423127: CPI(2020年基準)月次 / 0003007513: 労働力調査(失業率)月次
-            # CPI（2020年基準）総合
-            raw_cpi = fetch_estat_data("0003423567")
+            
+            raw_cpi = fetch_estat_data("0003427113", cd_cat01="0001")  # 総合
             raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 01は「完全失業率」
 
             raw_rate = raw_cpi.copy()
