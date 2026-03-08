@@ -22,7 +22,7 @@ def fetch_central_bank_data(symbol, name):
             return None
 
         # --- スコア計算 ---
-        cpi_yoy_series = raw_cpi.pct_change(12).dropna()
+        cpi_yoy_series = raw_cpi.pct_change(4).dropna()
         if cpi_yoy_series.empty:
             return None
 
@@ -61,6 +61,34 @@ def fetch_central_bank_data(symbol, name):
         st.error(f"Error: {e}")
         return None
 
+def fetch_sg_cpi():
+
+    import requests
+    import pandas as pd
+
+    url = "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M212261"
+
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    data = response.json()
+
+    rows = data["Data"]["row"]
+
+    records = []
+
+    for r in rows:
+        for c in r["columns"]:
+            records.append({
+                "date": c["key"],
+                "value": float(c["value"])
+            })
+
+    df = pd.DataFrame(records)
+
+    df["date"] = pd.to_datetime(df["date"].str.replace(" ", "-"))
+
+    series = pd.Series(df["value"].values, index=df["date"])
+
+    return series        
+
 def fetch_data(symbol, name):
     return fetch_central_bank_data(symbol, name)
-    
