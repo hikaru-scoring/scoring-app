@@ -15,6 +15,9 @@ def fetch_estat_data(stats_data_id, cd_cat01=None):
     try:
         response = requests.get(url, params=params)
         data = response.json()
+        print("=== e-Stat raw response ===")
+        print(data)
+
         # --- 修正箇所：e-Statのデータ抽出 ---
         # 1. ルートを取得
         root = data.get("GET_STATS_DATA", {})
@@ -59,7 +62,8 @@ def fetch_central_bank_data(symbol, name):
         # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
         if symbol == "JPN":
             # 0003423127: CPI(2020年基準)月次 / 0003007513: 労働力調査(失業率)月次
-            raw_cpi = fetch_estat_data("0003427113")
+            # CPI（2020年基準）総合
+            raw_cpi = fetch_estat_data("0003423567")
             raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 01は「完全失業率」
 
             raw_rate = raw_cpi.copy()
