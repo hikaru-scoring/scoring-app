@@ -20,10 +20,6 @@ def main():
     top_ = [
         {"name": "Federal Reserve (USA)", "symbol": "^TNX"},
         {"name": "Bank of Japan (JPN)", "symbol": "JPN"},
-        {"name": "European Central Bank (EU)", "symbol": "EZ"},
-        {"name": "Bank of England (UK)", "symbol": "UK"},
-        {"name": "Bank of Canada (CAN)", "symbol": "CAN"},
-        {"name": "Reserve Bank of Australia (AUS)", "symbol": "AUS"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_]
