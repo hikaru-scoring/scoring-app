@@ -65,23 +65,18 @@ def fetch_central_bank_data(symbol, name):
 
         # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
         if symbol == "JPN":
-            
-            raw_cpi = fetch_estat_data("0003427113", cd_cat01="0001")  # 総合
-            raw_unrate = fetch_estat_data("0003007513", cd_cat01="01") # 01は「完全失業率」
+            fred_key = st.secrets["FRED_API_KEY"]
+            fred = Fred(api_key=fred_key)
 
-        else:
-            if symbol == "^TNX":  # USA
-                ids = {"cpi": "CPIAUCSL", "10y": "DGS10", "2y": "DGS2", "m2": "M2SL", "rate": "FEDFUNDS", "unrate": "UNRATE"}    
-            elif symbol == "EZ":   # Eurozone
-                ids = {"cpi": "CP0000EZ19M086NEST", "10y": "IRLTLT01EZM156N", "2y": "IR3TIB01EZM156N", "m2": "MABMM301EZM189S", "rate": "ECBDFR", "unrate": "LRHUTTTTEZM156S"}
-            elif symbol == "UK":   # UK
-                ids = {"cpi": "GBRCPIALLMINMEI", "10y": "IRLTLT01GBM156N", "2y": "IR3TIB01GBM156N", "m2": "MABMM301GBM189S", "rate": "IR3TIB01GBM156N", "unrate": "LRHUTTTTGBM156S"}
-            elif symbol == "CAN":  # Canada
-                ids = {"cpi": "CPALTT01CAM657N", "10y": "IRLTLT01CAM156N", "2y": "IR3TIB01CAM156N", "m2": "MABMM301CAM189S", "rate": "IRSTCB01CAM156N", "unrate": "LRUNTTTTCAM156S"}
-            elif symbol == "AUS":  # Australia
-                ids = {"cpi": "AUSCPIALLQINMEI", "10y": "IRLTLT01AUM156N", "2y": "IR3TIB01AUM156N", "m2": "MABMM301AUM189S", "rate": "IR3TIB01AUM156N", "unrate": "LRUNTTTTAUM156S"}
-            else:
-                return None
+            # CPI は e-Stat のままでOK
+            raw_cpi = fetch_estat_data("0003427113", cd_cat01="0001")
+            raw_unrate = fetch_estat_data("0003007513", cd_cat01="01")
+
+            # 日本の金利・マネーは FRED から取得（安定している）
+            raw_10y = fred.get_series("IRLTLT01JPM156N")    # Japan Long-Term Yield
+            raw_2y  = fred.get_series("IR3TIB01JPM156N")   # Japan 2-year IB rate
+            raw_rate = fred.get_series("IRSTCI01JPM156N")  # Call Rate (Policy Rate proxy)
+            raw_m2  = fred.get_series("MYAGM2JPM189S")     # Japan M2
 
             # --- データの取得 ---
             # 共通して取得する（CPIとM2は少し長めに取る）
