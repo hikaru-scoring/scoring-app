@@ -63,51 +63,54 @@ def fetch_central_bank_data(symbol, name):
         fred_key = st.secrets["FRED_API_KEY"]
         fred = Fred(api_key=fred_key)
 
-        # --- 日本（JPN）の場合：日銀 & e-Stat ハイブリッド ---
+        # --- 1. データ取得フェーズ ---
         if symbol == "JPN":
-            fred_key = st.secrets["FRED_API_KEY"]
-            fred = Fred(api_key=fred_key)
-
-            # CPI は e-Stat のままでOK
+            # 日本：CPIと失業率は e-Stat から取得
             raw_cpi = fetch_estat_data("0003427113", cd_cat01="0001")
             raw_unrate = fetch_estat_data("0003007513", cd_cat01="01")
+            
+            # 金利・マネーは取得が容易な FRED から取得
+            raw_10y = fred.get_series("IRLTLT01JPM156N")
+            raw_2y  = fred.get_series("IR3TIB01JPM156N")
+            raw_rate = fred.get_series("IRSTCI01JPM156N")
+            raw_m2  = fred.get_series("MYAGM2JPM189S")
 
-            # 日本の金利・マネーは FRED から取得（安定している）
-            raw_10y = fred.get_series("IRLTLT01JPM156N")    # Japan Long-Term Yield
-            raw_2y  = fred.get_series("IR3TIB01JPM156N")   # Japan 2-year IB rate
-            raw_rate = fred.get_series("IRSTCI01JPM156N")  # Call Rate (Policy Rate proxy)
-            raw_m2  = fred.get_series("MYAGM2JPM189S")     # Japan M2
+        elif symbol == "^TNX": # USA
+            # アメリカ：全て FRED から取得
+            raw_cpi = fred.get_series("CPIAUCSL", observation_start='2018-01-01')
+            raw_10y = fred.get_series("DGS10")
+            raw_2y = fred.get_series("DGS2")
+            raw_m2 = fred.get_series("M2SL", observation_start='2018-01-01')
+            raw_rate = fred.get_series("FEDFUNDS")
+            raw_unrate = fred.get_series("UNRATE")
+        
+        else:
+            return None
 
-            # --- データの取得 ---
-            # 共通して取得する（CPIとM2は少し長めに取る）
-            raw_cpi = fred.get_series(ids["cpi"], observation_start='2018-01-01')
-            raw_10y = fred.get_series(ids["10y"])
-            raw_2y = fred.get_series(ids["2y"])
-            raw_m2 = fred.get_series(ids["m2"], observation_start='2018-01-01')
-            raw_rate = fred.get_series(ids["rate"])
-            raw_unrate = fred.get_series(ids["unrate"])
-
-        # 計算
+        # --- 2. スコア計算フェーズ (共通) ---
         cpi_yoy_series = raw_cpi.pct_change(12).dropna()
-
         if cpi_yoy_series.empty:
-            st.error("CPI YoY cannot be calculated")
+            st.error(f"CPI YoY cannot be calculated for {name}")
             return None
 
         cpi_yoy = cpi_yoy_series.iloc[-1] * 100
         cpi_score = max(0, 200 - abs(cpi_yoy - 2.0) * 50)
-        future_focus_score = int(cpi_score) # CPIスコアをそのまま使用
         
         yield_vol = raw_10y.diff().tail(20).std()
         stability_score = max(0, 100 - (yield_vol * 500))
+        
+        # 直近のイールドカーブ・ギャップ
         curve_gap = raw_10y.iloc[-1] - raw_2y.iloc[-1]
         curve_score = max(0, min(100, 100 + (curve_gap * 100)))
-        market_pos_score = int(stability_score + curve_score)
 
         m2_yoy = raw_m2.pct_change(12).dropna().iloc[-1] * 100
         cashflow_score = int(max(0, 200 - abs(m2_yoy - 4.0) * 30))
+        
+        # 実質金利スコア
         real_rate = raw_rate.iloc[-1] - cpi_yoy
         fin_strength_score = int(max(0, min(200, real_rate * 50)))
+        
+        # 雇用スコア
         people_score = int(max(0, 200 - abs(raw_unrate.iloc[-1] - 4.0) * 40))
 
         axes = {
@@ -128,13 +131,5 @@ def fetch_central_bank_data(symbol, name):
             "market_cap": 0
         }
     except Exception as e:
-        st.error(f"FRED Error ({name}): {e}")
+        st.error(f"Data Processing Error ({name}): {e}")
         return None
-
-# ルーターを更新
-def fetch_data(symbol, name):
-    return fetch_central_bank_data(symbol, name)
-
-# 比較用（日本銀行をデフォルトに）
-def fetch_jpn_data():
-    return fetch_central_bank_data("JPN", "Bank of Japan")
