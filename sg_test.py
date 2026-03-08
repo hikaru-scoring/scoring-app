@@ -3,7 +3,8 @@ import pandas as pd
 
 url = "https://tablebuilder.singstat.gov.sg/api/table/tabledata/M212261"
 
-data = requests.get(url).json()
+response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+data = response.json()
 
 rows = data["Data"]["row"]
 
