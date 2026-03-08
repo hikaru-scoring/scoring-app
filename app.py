@@ -41,19 +41,10 @@ def main():
     # ✅ ここまで挿入！
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
 
-    # 比較ボタン
-    c1, c2, c3, _ = st.columns([1.2, 1.2, 1.5, 3])
-    compare_jpn = c3.button("🇯🇵 COMPARE WITH BOJ")
-
     # 2. メイン銘柄のデータ取得
     data = fetch_data(symbol, name)
 
     if data:
-        if compare_jpn:
-            from data_logic import fetch_jpn_data 
-            st.session_state.saved_data = fetch_jpn_data()
-            st.rerun()
-
         # 1. 総合点数（中央上部）
         source = st.session_state.saved_data if st.session_state.saved_data else data
         display_total = int(data.get("total", 0))
