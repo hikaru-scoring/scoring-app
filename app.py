@@ -4,10 +4,9 @@ import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
 from data_logic import fetch_data
 
-APP_TITLE = "Scoring Dashboard"
+APP_TITLE = "FRS-1000 — SGX Dashboard"
 # 冒頭 9行目付近
-# --- 指標定義（FRB用とコモディティ用） ---
-FRB_AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+AXES = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
 
 def main():
     st.set_page_config(page_title=APP_TITLE, layout="wide")
@@ -16,35 +15,47 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
-        # --- 🚀 世界の中央銀行 セレクション ---
-    top_ = [
-        {"name": "Federal Reserve (USA)", "symbol": "^TNX"},
-        {"name": "Monetary Authority of Singapore (SGP)", "symbol": "SGP"},
+    # --- 🚀 厳選5銘柄固定ロジック（ここを完全に置き換え） ---
+    top_5 = [
+        {"name": "DBS Group", "symbol": "D05"},
+        {"name": "Singtel", "symbol": "Z74"},
+        {"name": "OCBC Bank", "symbol": "O39"},
+        {"name": "Keppel Ltd", "symbol": "BN4"},
+        {"name": "CapitaLand Investment", "symbol": "9CI"}
     ]
     
-    options = [f"{s['name']} ({s['symbol']})" for s in top_]
+    options = [f"{s['name']} ({s['symbol']})" for s in top_5]
     target = st.selectbox("Select Asset", options)
     
     # 選択した銘柄の名前とシンボルを抽出
     name = target.rsplit(" (", 1)[0]
-    symbol = next(s['symbol'] for s in top_ if s['name'] == name)
+    symbol = next(s['symbol'] for s in top_5 if s['name'] == name)
 
-    # ✅ ここから挿入！
-    display_axes = FRB_AXES
-    descriptions = {
-        "Future Focus": "Inflation Forecasting & Control",
-        "Market Position": "Yield Stability & Curve Credibility",
-        "Financial Strength": "Real Rate Cushion (Policy Ammo)",
-        "Cashflow Quality": "M2 Money Supply Optimization",
-        "People": "Natural Rate of Unemployment Target"
-    }
-    # ✅ ここまで挿入！
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
+
+    # 比較ボタン
+    c1, c2, c3, _ = st.columns([1.2, 1.2, 1.5, 3])
+    save_it = c1.button("💾 SAVE COMPANY")
+    clear_it = c2.button("🗑️ CLEAR")
+    compare_oil = c3.button("🛢️ COMPARE WITH OIL")
 
     # 2. メイン銘柄のデータ取得
     data = fetch_data(symbol, name)
 
     if data:
+        # 3. ボタンごとの動作設定
+        if save_it: 
+            st.session_state.saved_data = data
+            st.rerun()
+        if clear_it: 
+            st.session_state.saved_data = None
+            st.rerun()
+        if compare_oil:
+            # data_logic.pyから原油データを呼んでくる
+            from data_logic import fetch_oil_data 
+            st.session_state.saved_data = fetch_oil_data()
+            st.rerun()
+
         # 1. 総合点数（中央上部）
         source = st.session_state.saved_data if st.session_state.saved_data else data
         display_total = int(data.get("total", 0))
@@ -63,7 +74,7 @@ def main():
         with col_left:
             # タイトルの上下余白を極限まで詰める
             st.markdown("<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>", unsafe_allow_html=True)
-            fig_r = render_radar_chart(data, st.session_state.saved_data, display_axes)
+            fig_r = render_radar_chart(data, st.session_state.saved_data, AXES)
             st.plotly_chart(fig_r, use_container_width=True)
 
         with col_right:
@@ -77,11 +88,11 @@ def main():
             
 # 🚀 会社用のロジック解説（Peopleに復刻）
             logic_descriptions = {
-                "Future Focus": "Inflation Forecasting & Control",
-                "Market Position": "Yield Stability & Curve Credibility",
-                "Financial Strength": "Real Rate Cushion (Policy Ammo)",
-                "Cashflow Quality": "M2 Money Supply Optimization",
-                "People": "Natural Rate of Unemployment Target"
+                "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
+                "Market Position": "Market Volatility × Market Capitalization",
+                "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
+                "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
+                "People": "Long-term Growth × Dividend Yield"
             }
             # 🚀 原油用のロジック解説 (data_logic.py の計算式に準拠)
             oil_labels = ["Demand Forecast", "Geopolitical Risk", "Price Level Stress", "Supply Stability", "Market Heat Index"]
@@ -94,7 +105,7 @@ def main():
             }
             
             # 指標カードの生成（25% Enlarged Version）
-            for i, k in enumerate(display_axes):
+            for i, k in enumerate(AXES):
                 v1 = data["axes"].get(k, 0)  # 現在の資産（青）
                 v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None # 保存済み（オレンジ）
                 
@@ -124,13 +135,12 @@ def main():
                     </div>
                 """, unsafe_allow_html=True)
 
-        # 3. 下段：チャート（比較機能を維持 ＋ クリック・ズーム禁止）
-        st.markdown(f"<div class='section-title'>V. {name} Trend</div>", unsafe_allow_html=True)
+        # 3. 下段：株価チャート
+        st.markdown("<div class='section-title'>V. Price Performance (5Y)</div>", unsafe_allow_html=True)
         fig_p = go.Figure()
-
-        # 🎯 ここで「保存されたデータ」があるかチェックして比較線を引く
         if st.session_state.saved_data:
             s_data = st.session_state.saved_data
+            # 市場が違う（SGX vs 米国先物）のでmergeせず、それぞれ%変化率で描画
             y1 = (data['price_hist'] / data['price_hist'].iloc[0] - 1) * 100
             y2 = (s_data['price_hist'] / s_data['price_hist'].iloc[0] - 1) * 100
             
@@ -139,18 +149,10 @@ def main():
             fig_p.update_layout(yaxis_title="Return (%)")
         else:
             fig_p.add_trace(go.Scatter(x=data['price_hist'].index, y=data['price_hist'].values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
-            fig_p.update_layout(yaxis_title="Yield (%)")
+            fig_p.update_layout(yaxis_title="Price")
 
-        # 🎯 ここに「禁止設定」を入れました
-        fig_p.update_layout(
-            plot_bgcolor='white', height=400, margin=dict(l=0, r=0, t=20, b=0), 
-            hovermode="x unified",
-            clickmode='none',  # 👈 クリック反応を消す
-            dragmode=False     # 👈 ズーム（変な感じ）を消す
-        )
-
-        # 🎯 右上のメニューバーも消してスッキリ
-        st.plotly_chart(fig_p, use_container_width=True, config={'displayModeBar': False})
+        fig_p.update_layout(plot_bgcolor='white', height=400, margin=dict(l=0, r=0, t=20, b=0), hovermode="x unified")
+        st.plotly_chart(fig_p, use_container_width=True)
 
         # 4. Snapshot（比較対応版）
         st.markdown("<div class='section-title'>VI. Snapshot Comparison</div>", unsafe_allow_html=True)
