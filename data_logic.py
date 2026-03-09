@@ -16,8 +16,15 @@ def fetch_data(symbol, name):
     
     ticker = yf.Ticker(f"{symbol}.SI")
     try:
-        # 1年分のデータを取得して計算の根拠にする
-        hist = ticker.history(period="1y")
+        try:
+            # まずはYahooに挑戦
+            hist = ticker.history(period="1y")
+            if hist.empty: raise Exception("Block")
+        except:
+            # ブロックされたら即座に用意しておいたCSVを読み込む
+            st.warning("Using backup data due to rate limit.")
+            hist = pd.read_csv(f"backup_{symbol}.csv", index_col=0, parse_dates=True)
+            hist = ticker.history(period="1y")
         if hist.empty: return None
         
         # --- ここから追記 ---
