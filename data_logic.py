@@ -3,7 +3,7 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 
-@st.cache_data(ttl=86400)
+@st.cache_data(ttl=86400, persist="disk")
 def fetch_data(symbol, name):
     """
     株価データと分析スコアを取得する関数。
@@ -115,7 +115,7 @@ def fetch_data(symbol, name):
 
 # data_logic.py の末尾に追記
 
-@st.cache_data(ttl=86400)
+@st.cache_data(ttl=86400, persist="disk")
 def fetch_oil_data():
     """WTI原油先物データを取得し、動的なマーケットスコアに変換する"""
     ticker = yf.Ticker("CL=F")
