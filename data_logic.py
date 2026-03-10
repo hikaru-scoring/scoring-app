@@ -16,19 +16,7 @@ def fetch_data(symbol, name):
     
     ticker = yf.Ticker(f"{symbol}.SI")
     try:
-        # まずはYahoo Financeに最新データを取りに行く
-        hist = ticker.history(period="1y")
         
-        # もしブロックされてデータが空っぽ(empty)なら、失敗扱いで次に飛ばす
-        if hist.empty:
-            raise Exception("Rate Limited")
-            
-    except:
-        # 【重要】ネットがダメなら、あらかじめGitHubに上げておいた予備(CSV)を読み込む
-        import pandas as pd
-        # ファイル名は backup_D05.csv のような形になります
-        hist = pd.read_csv(f"backup_{symbol}.csv", index_col=0, parse_dates=True)
-    # --- ここまで書き換え ---
         if hist.empty: return None
         
         # --- ここから追記 ---
