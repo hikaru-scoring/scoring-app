@@ -2,6 +2,7 @@
 import pandas as pd
 import yfinance as yf
 import streamlit as st
+from fredapi import Fred
 
 @st.cache_data(ttl=86400, persist="disk")
 def fetch_data(symbol, name):
@@ -167,3 +168,97 @@ def fetch_oil_data():
     except Exception as e:
         st.error(f"Oil Data Error: {e}")
         return None
+
+@st.cache_data(ttl=86400, persist="disk")
+def fetch_central_bank_data(bank):
+    """
+    FREDから中央銀行スコア用の主要マクロ指標を取得する。
+    返り値は app.py でそのまま使える辞書。
+    """
+
+    fred_key = st.secrets["FRED_API_KEY"]
+    fred = Fred(api_key=fred_key)
+
+    # 中央銀行ごとのFRED series
+    series_map = {
+        "Federal Reserve": {
+            "y10": "DGS10",
+            "y2": "DGS2",
+            "cpi": "CPIAUCSL",
+            "unemployment": "UNRATE",
+            "m2": "M2SL",
+        },
+        "European Central Bank": {
+            "y10": "IRLTLT01EZM156N",
+            "y2": "IR3TIB01EZM156N",
+            "cpi": "CP0000EZ19M086NEST",
+            "unemployment": "LRHUTTTTEZM156S",
+            "m2": "MYAGM2EZM196N",
+        },
+        "Bank of Japan": {
+            "y10": "IRLTLT01JPM156N",
+            "y2": "IRSTCI01JPM156N",
+            "cpi": "JPNCPIALLMINMEI",
+            "unemployment": "LRUNTTTTJPM156S",
+            "m2": "MYAGM2JPM189N",
+        },
+        "Bank of England": {
+            "y10": "IRLTLT01GBM156N",
+            "y2": "IRSTCI01GBM156N",
+            "cpi": "GBRCPIALLMINMEI",
+            "unemployment": "LRUNTTTTGBM156S",
+            "m2": "MYAGM2GBM189N",
+        },
+        "MAS": {
+            "y10": "IRLTLT01SGM156N",
+            "y2": "IR3TIB01SGM156N",
+            "cpi": "SGPCPIALLMINMEI",
+            "unemployment": "LRUNTTTTSGM156S",
+            "m2": "MYAGM2SGM189N",
+        },
+    }
+
+    try:
+        ids = series_map[bank]
+
+        y10 = fred.get_series(ids["y10"]).dropna()
+        y2 = fred.get_series(ids["y2"]).dropna()
+        cpi = fred.get_series(ids["cpi"]).dropna()
+        unemployment = fred.get_series(ids["unemployment"]).dropna()
+        m2 = fred.get_series(ids["m2"]).dropna()
+
+        if y10.empty or y2.empty or cpi.empty or unemployment.empty or m2.empty:
+            return None
+
+        # --- 最新値 ---
+        latest_y10 = float(y10.iloc[-1])
+        latest_y2 = float(y2.iloc[-1])
+        latest_unemployment = float(unemployment.iloc[-1])
+
+        # --- CPI YoY ---
+        if len(cpi) < 13:
+            return None
+        cpi_yoy = ((cpi.iloc[-1] / cpi.iloc[-13]) - 1) * 100
+
+        # --- M2 YoY ---
+        if len(m2) < 13:
+            return None
+        m2_yoy = ((m2.iloc[-1] / m2.iloc[-13]) - 1) * 100
+
+        # --- 10Y volatility ---
+        y10_vol = y10.tail(20).std() if len(y10) >= 20 else y10.std()
+
+        return {
+            "name": bank,
+            "y10": latest_y10,
+            "y2": latest_y2,
+            "cpi_yoy": float(cpi_yoy),
+            "unemployment": latest_unemployment,
+            "m2_yoy": float(m2_yoy),
+            "y10_vol": float(y10_vol),
+            "curve": float(latest_y10 - latest_y2),
+        }
+
+    except Exception as e:
+        st.error(f"Central Bank Data Error: {e}")
+        return None        
