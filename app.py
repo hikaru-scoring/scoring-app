@@ -19,7 +19,7 @@ AXES = [
 st.set_page_config(page_title=APP_TITLE, layout="wide")
 
 def main():
-    inject_css()
+    #inject_css()
 
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
