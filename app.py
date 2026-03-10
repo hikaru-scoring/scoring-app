@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
-from data_logic import fetch_data
+from data_logic import fetch_data, fetch_central_bank_data
 
 APP_TITLE = "FRS-1000 — SGX Dashboard"
 
@@ -336,6 +336,7 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                 unsafe_allow_html=True
             )
 
+    # --- Central Banks TAB ---
     with tab2:
 
         st.markdown(
@@ -356,8 +357,29 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             banks
         )
 
-        st.info("Central Bank Scoring logic will appear here.")
+        # FREDデータ取得
+        bank_data = fetch_central_bank_data(bank)
 
+        if bank_data:
+
+            st.subheader("Raw Macro Data")
+
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                st.metric("10Y Yield", f"{bank_data['y10']:.2f}%")
+                st.metric("2Y Yield", f"{bank_data['y2']:.2f}%")
+
+            with col2:
+                st.metric("CPI YoY", f"{bank_data['cpi_yoy']:.2f}%")
+                st.metric("Unemployment", f"{bank_data['unemployment']:.2f}%")
+
+            with col3:
+                st.metric("M2 YoY", f"{bank_data['m2_yoy']:.2f}%")
+                st.metric("Yield Curve", f"{bank_data['curve']:.2f}%")
+
+        else:
+            st.warning("Central bank data could not be loaded.")
 
     with tab3:
 
