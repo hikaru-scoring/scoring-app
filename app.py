@@ -62,26 +62,6 @@ def main():
 
         options = [f"{s['name']} ({s['symbol']})" for s in top_5]
 
-        target = st.selectbox(
-            "Select Asset",
-            options
-        )
-
-        # 選択した銘柄の名前とシンボルを抽出
-        name = target.rsplit(" (", 1)[0]
-
-        symbol = next(
-            s['symbol'] for s in top_5 if s['name'] == name
-        )
-
-        st.markdown(
-            f'<div class="company-header">{name}</div>',
-            unsafe_allow_html=True
-        )
-
-        # 2. メイン銘柄のデータ取得
-        data = fetch_data(symbol, name)
-
         if data:
 
             save_it = st.button("Save")
