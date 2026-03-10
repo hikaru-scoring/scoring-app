@@ -65,9 +65,13 @@ def main():
 
         if data:
 
-            save_it = st.button("Save")
+            col_btn1, col_btn2 = st.columns(2)
 
-            clear_it = st.button("Clear")
+            with col_btn1:
+                save_it = st.button("Save")
+
+            with col_btn2:
+                clear_it = st.button("Clear")
 
             # 3. ボタンごとの動作設定
             if save_it: 
