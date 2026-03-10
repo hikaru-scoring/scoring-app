@@ -16,6 +16,8 @@ def fetch_data(symbol, name):
     
     ticker = yf.Ticker(f"{symbol}.SI")
     try:
+
+        hist = ticker.history(period="5y")
         
         if hist.empty: return None
         
