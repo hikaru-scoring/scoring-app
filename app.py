@@ -16,11 +16,11 @@ AXES = [
     "People"
 ]
 
+st.set_page_config(page_title=APP_TITLE, layout="wide")
+    inject_css()
+
 
 def main():
-
-    st.set_page_config(page_title=APP_TITLE, layout="wide")
-    inject_css()
 
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
