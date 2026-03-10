@@ -39,6 +39,8 @@ def main():
             {"name": "CapitaLand Investment", "symbol": "9CI"}
         ]
 
+        options = [f"{s['name']} ({s['symbol']})" for s in top_5]
+
         target = st.selectbox(
             "Select Asset",
             options
