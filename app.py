@@ -82,12 +82,14 @@ def main():
             source = st.session_state.saved_data if st.session_state.saved_data else data
             display_total = int(data.get("total", 0))
 
-            # 1. 総合点数（中央上部）
             st.markdown(f"""
-                <div class="total-score-container" style="margin-bottom: 10px; padding-top: 10px;">
-                    <div class="total-score-label" style="margin-bottom: 0px;">TOTAL SCORE</div>
-                    <div class="total-score-val">{display_total} <span style="font-size:30px; color:#DDD;">/ 1000</span></div>
+            <div style="text-align:center; margin-top:40px; margin-bottom:30px;">
+                <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
+                <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
+                    {display_total}
+                    <span style="font-size:35px; color:#BBB;">/ 1000</span>
                 </div>
+            </div>
             """, unsafe_allow_html=True)
 
             # 2. 中段：レーダーチャート（左）と DNA点数（右）
