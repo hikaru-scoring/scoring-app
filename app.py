@@ -16,13 +16,17 @@ def main():
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
 
+    # --- ここを追加 ---
+    tab1, tab2, tab3 = st.tabs(["SGX", "Central Banks", "Commodities"])
+
     # --- 🚀 厳選5銘柄固定ロジック（ここを完全に置き換え） ---
-    top_5 = [
-        {"name": "DBS Group", "symbol": "D05"},
-        {"name": "Singtel", "symbol": "Z74"},
-        {"name": "OCBC Bank", "symbol": "O39"},
-        {"name": "Keppel Ltd", "symbol": "BN4"},
-        {"name": "CapitaLand Investment", "symbol": "9CI"}
+    with tab1:
+        top_5 = [
+            {"name": "DBS Group", "symbol": "D05"},
+            {"name": "Singtel", "symbol": "Z74"},
+            {"name": "OCBC Bank", "symbol": "O39"},
+            {"name": "Keppel Ltd", "symbol": "BN4"},
+            {"name": "CapitaLand Investment", "symbol": "9CI"}
     ]
     
     options = [f"{s['name']} ({s['symbol']})" for s in top_5]
@@ -34,12 +38,6 @@ def main():
 
     st.markdown(f'<div class="company-header">{name}</div>', unsafe_allow_html=True)
 
-    # 比較ボタン
-    c1, c2, c3, _ = st.columns([1.2, 1.2, 1.5, 3])
-    save_it = c1.button("💾 SAVE COMPANY")
-    clear_it = c2.button("🗑️ CLEAR")
-    compare_oil = c3.button("🛢️ COMPARE WITH OIL")
-
     # 2. メイン銘柄のデータ取得
     data = fetch_data(symbol, name)
 
@@ -50,11 +48,6 @@ def main():
             st.rerun()
         if clear_it: 
             st.session_state.saved_data = None
-            st.rerun()
-        if compare_oil:
-            # data_logic.pyから原油データを呼んでくる
-            from data_logic import fetch_oil_data 
-            st.session_state.saved_data = fetch_oil_data()
             st.rerun()
 
         # 1. 総合点数（中央上部）
@@ -228,6 +221,37 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 </div>
 </div>
 """, unsafe_allow_html=True)
+
+    with tab2:
+
+        st.markdown("<div class='company-header'>Central Banks</div>", unsafe_allow_html=True)
+
+        banks = [
+            "Federal Reserve",
+            "European Central Bank",
+            "Bank of Japan",
+            "Bank of England",
+            "MAS"
+        ]
+
+        bank = st.selectbox("Select Central Bank", banks)
+
+        st.info("Central Bank Scoring logic will appear here.")
+
+    with tab3:
+
+        st.markdown("<div class='company-header'>Commodities</div>", unsafe_allow_html=True)
+
+        assets = [
+            "WTI Crude Oil",
+            "Gold",
+            "Copper"
+        ]
+
+        asset = st.selectbox("Select Commodity", assets)
+
+        st.info("Commodity scoring will appear here.")
+
 
 # 💡 ここからは if data: ブロックの外側。一番左に配置
 if __name__ == "__main__":
