@@ -111,8 +111,7 @@ def fetch_data(symbol, name):
             "pe": per if per else "N/A",
             "market_cap": m_cap if m_cap else 0
         }
-    except Exception as e:
-        st.error(f"Stock Data Error: {e}")
+    except Exception:
         return None
 
 # data_logic.py の末尾に追記
