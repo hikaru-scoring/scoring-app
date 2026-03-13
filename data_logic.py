@@ -172,10 +172,13 @@ def fetch_oil_data():
 def _singstat_fetch(table_id, series_name):
     """SingStat APIから指定シリーズをpd.Seriesで返す"""
     import requests
-    url = f"https://tablebuilder.singstat.gov.sg/api/table/tabledata/{table_id}"
-    r = requests.get(url, timeout=15)
-    r.raise_for_status()
-    rows = r.json().get("Data", {}).get("row", [])
+    try:
+        url = f"https://tablebuilder.singstat.gov.sg/api/table/tabledata/{table_id}"
+        r = requests.get(url, timeout=15)
+        r.raise_for_status()
+        rows = r.json().get("Data", {}).get("row", [])
+    except Exception:
+        return None
     for row in rows:
         if row.get("rowText", "").strip() == series_name:
             records = {}
