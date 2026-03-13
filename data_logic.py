@@ -248,8 +248,25 @@ def fetch_central_bank_data(bank):
         # --- 10Y volatility ---
         y10_vol = y10.tail(20).std() if len(y10) >= 20 else y10.std()
 
+        # --- Axes スコア計算 ---
+        price_stability = float(max(0, min(200, 200 - abs(float(cpi_yoy) - 2) * 20)))
+        employment      = float(max(0, min(200, 200 - latest_unemployment * 15)))
+        monetary_policy = float(max(0, min(200, 100 + (latest_y10 - latest_y2) * 30)))
+        liquidity       = float(max(0, min(200, 200 - abs(float(m2_yoy) - 5) * 10)))
+        market_stability= float(max(0, min(200, 200 - float(y10_vol) * 100)))
+
+        cb_axes = {
+            "Price Stability": price_stability,
+            "Employment":      employment,
+            "Monetary Policy": monetary_policy,
+            "Liquidity":       liquidity,
+            "Market Stability":market_stability,
+        }
+
         return {
             "name": bank,
+            "axes": cb_axes,
+            "total": int(sum(cb_axes.values())),
             "y10": latest_y10,
             "y2": latest_y2,
             "cpi_yoy": float(cpi_yoy),
