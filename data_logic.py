@@ -20,11 +20,7 @@ def fetch_data(symbol, name):
 
         hist = ticker.history(period="5y")
         
-        if hist.empty:
-            return {
-                "axes": {"Future Focus": 100, "Market Position": 100, "Financial Strength": 100, "Cashflow Quality": 100, "People": 100},
-                "total": 500, "name": name, "price_hist": None, "current_price": 0, "pe": "N/A", "market_cap": 0
-            }
+        if hist.empty: return None
         
         # --- ここから追記 ---
         last_price = hist['Close'].iloc[-1]
