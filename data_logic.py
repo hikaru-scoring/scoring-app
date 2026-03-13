@@ -274,6 +274,7 @@ def fetch_central_bank_data(bank):
             "m2_yoy": float(m2_yoy),
             "y10_vol": float(y10_vol),
             "curve": float(latest_y10 - latest_y2),
+            "y10_hist": y10,
         }
 
     except Exception as e:
