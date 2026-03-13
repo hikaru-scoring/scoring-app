@@ -169,7 +169,7 @@ def fetch_oil_data():
         st.error(f"Oil Data Error: {e}")
         return None
 
-@st.cache_data(ttl=86400, persist="disk")
+@st.cache_data(ttl=86400)
 def fetch_central_bank_data(bank):
     """
     FREDから中央銀行スコア用の主要マクロ指標を取得する。
