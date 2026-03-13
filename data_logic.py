@@ -197,14 +197,14 @@ def fetch_central_bank_data(bank):
         },
         "Bank of Japan": {
             "y10": "IRLTLT01JPM156N",
-            "y2": "IRSTCI01JPM156N",
+            "y2": "IR3TIB01JPM156N",
             "cpi": "JPNCPIALLMINMEI",
             "unemployment": "LRUNTTTTJPM156S",
             "m2": "MYAGM2JPM189N",
         },
         "Bank of England": {
             "y10": "IRLTLT01GBM156N",
-            "y2": "IRSTCI01GBM156N",
+            "y2": "IR3TIB01GBM156N",
             "cpi": "GBRCPIALLMINMEI",
             "unemployment": "LRUNTTTTGBM156S",
             "m2": "MYAGM2GBM189N",
