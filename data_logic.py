@@ -186,6 +186,149 @@ def _worldbank_fetch(indicator, country="SGP"):
         return None
 
 
+def _ecb_sdmx_series(dataset, key, last_n=25):
+    """ECB SDMX-JSON APIからpandas Seriesを取得する"""
+    import requests
+    import pandas as pd
+    try:
+        url = (f"https://data-api.ecb.europa.eu/service/data/{dataset}/{key}"
+               f"?format=jsondata&lastNObservations={last_n}&detail=dataonly")
+        r = requests.get(url, timeout=20)
+        if r.status_code != 200:
+            return None
+        data = r.json()
+        series_data = data["dataSets"][0]["series"]
+        series_key = list(series_data.keys())[0]
+        obs = series_data[series_key]["observations"]
+        time_vals = data["structure"]["dimensions"]["observation"][0]["values"]
+        d = {}
+        for idx_str, val_arr in obs.items():
+            if val_arr[0] is not None:
+                d[time_vals[int(idx_str)]["id"]] = float(val_arr[0])
+        return pd.Series(d).sort_index() if d else None
+    except Exception:
+        return None
+
+
+def _fetch_ecb_data():
+    """ECB公式SDMX APIから全指標を取得する"""
+    y10   = _ecb_sdmx_series("IRS",  "M.DE.L.L40.CI.0000.EUR.N.Z",         30)
+    y2    = _ecb_sdmx_series("FM",   "M.U2.EUR.RT.MM.EURIBOR3MD_.HSTA",     30)
+    cpi   = _ecb_sdmx_series("ICP",  "M.U2.N.000000.4.ANR",                 13)  # 既にYoY%
+    unemp = _ecb_sdmx_series("LFSI", "M.U2.S.UNEHRT.TOTAL0.15_74.T",        13)
+    m2    = _ecb_sdmx_series("BSI",  "M.U2.Y.V.M20.X.I.U2.2300.Z01.E",     25)
+
+    if any(s is None or s.empty for s in [y10, y2, cpi, unemp]):
+        st.error("ECB Data Error: SDMX fetch failed")
+        return None
+
+    latest_y10          = float(y10.iloc[-1])
+    latest_y2           = float(y2.iloc[-1])
+    cpi_yoy             = float(cpi.iloc[-1])
+    latest_unemployment = float(unemp.iloc[-1])
+
+    if m2 is not None and len(m2) >= 13:
+        m2_yoy = float(((m2.iloc[-1] / m2.iloc[-13]) - 1) * 100)
+    else:
+        m2_yoy = 5.0
+
+    y10_vol = float(y10.tail(20).std()) if len(y10) >= 20 else float(y10.std())
+
+    price_stability  = float(max(0, min(200, 200 - abs(cpi_yoy - 2) * 20)))
+    employment       = float(max(0, min(200, 200 - latest_unemployment * 15)))
+    monetary_policy  = float(max(0, min(200, 100 + (latest_y10 - latest_y2) * 30)))
+    liquidity        = float(max(0, min(200, 200 - abs(m2_yoy - 5) * 10)))
+    market_stability = float(max(0, min(200, 200 - y10_vol * 100)))
+
+    cb_axes = {
+        "Price Stability":  price_stability,
+        "Employment":       employment,
+        "Monetary Policy":  monetary_policy,
+        "Liquidity":        liquidity,
+        "Market Stability": market_stability,
+    }
+
+    return {
+        "name":         "European Central Bank",
+        "axes":         cb_axes,
+        "total":        int(sum(cb_axes.values())),
+        "y10":          latest_y10,
+        "y2":           latest_y2,
+        "cpi_yoy":      cpi_yoy,
+        "unemployment": latest_unemployment,
+        "m2_yoy":       m2_yoy,
+        "y10_vol":      y10_vol,
+        "curve":        float(latest_y10 - latest_y2),
+        "y10_hist":     y10,
+    }
+
+
+def _fetch_boj_data():
+    """日本銀行データ：FRED（金利・失業率）+ World Bank（CPI）"""
+    fred_key = st.secrets["FRED_API_KEY"]
+    fred = Fred(api_key=fred_key)
+
+    y10 = y2 = unemployment = None
+    try:
+        y10 = fred.get_series("IRLTLT01JPM156N").dropna()
+    except Exception:
+        pass
+    try:
+        y2 = fred.get_series("IR3TIB01JPM156N").dropna()
+    except Exception:
+        pass
+    try:
+        unemployment = fred.get_series("LRHUTTTTJPM156S").dropna()
+    except Exception:
+        pass
+
+    if y10 is None or y10.empty or y2 is None or y2.empty:
+        st.error("BoJ Data Error: FRED yield fetch failed")
+        return None
+
+    latest_y10          = float(y10.iloc[-1])
+    latest_y2           = float(y2.iloc[-1])
+    latest_unemployment = float(unemployment.iloc[-1]) if unemployment is not None and not unemployment.empty else 3.0
+
+    # CPI: FREDのJPNCPIALLMINMEIは2021年6月に廃止 → World Bank代替
+    cpi_yoy = _worldbank_fetch("FP.CPI.TOTL.ZG", country="JPN")
+    if cpi_yoy is None:
+        cpi_yoy = 2.0
+
+    # M2: FREDのMYAGM2JPM189Nは2017年2月に廃止 → 中立値
+    m2_yoy = 5.0
+
+    y10_vol = float(y10.tail(20).std()) if len(y10) >= 20 else float(y10.std())
+
+    price_stability  = float(max(0, min(200, 200 - abs(cpi_yoy - 2) * 20)))
+    employment       = float(max(0, min(200, 200 - latest_unemployment * 15)))
+    monetary_policy  = float(max(0, min(200, 100 + (latest_y10 - latest_y2) * 30)))
+    liquidity        = 100.0  # M2データ取得不可のため中立値
+    market_stability = float(max(0, min(200, 200 - y10_vol * 100)))
+
+    cb_axes = {
+        "Price Stability":  price_stability,
+        "Employment":       employment,
+        "Monetary Policy":  monetary_policy,
+        "Liquidity":        liquidity,
+        "Market Stability": market_stability,
+    }
+
+    return {
+        "name":         "Bank of Japan",
+        "axes":         cb_axes,
+        "total":        int(sum(cb_axes.values())),
+        "y10":          latest_y10,
+        "y2":           latest_y2,
+        "cpi_yoy":      float(cpi_yoy),
+        "unemployment": latest_unemployment,
+        "m2_yoy":       m2_yoy,
+        "y10_vol":      y10_vol,
+        "curve":        float(latest_y10 - latest_y2),
+        "y10_hist":     y10,
+    }
+
+
 def _fetch_mas_data():
     """MAS用データをWorld Bank + FREDから取得する"""
     # --- World Bank: CPI年次変化率(%) ---
@@ -255,16 +398,21 @@ def _fetch_mas_data():
 @st.cache_data(ttl=86400)
 def fetch_central_bank_data(bank):
     """
-    FREDから中央銀行スコア用の主要マクロ指標を取得する。
+    中央銀行スコア用の主要マクロ指標を取得する。
+    ECB・BoJは公式APIを使用、Fed・BoEはFREDを使用。
     返り値は app.py でそのまま使える辞書。
     """
     if bank == "MAS":
         return _fetch_mas_data()
+    if bank == "European Central Bank":
+        return _fetch_ecb_data()
+    if bank == "Bank of Japan":
+        return _fetch_boj_data()
 
     fred_key = st.secrets["FRED_API_KEY"]
     fred = Fred(api_key=fred_key)
 
-    # 中央銀行ごとのFRED series
+    # Federal Reserve と Bank of England は FRED を使用
     series_map = {
         "Federal Reserve": {
             "y10": "DGS10",
@@ -273,33 +421,12 @@ def fetch_central_bank_data(bank):
             "unemployment": "UNRATE",
             "m2": "M2SL",
         },
-        "European Central Bank": {
-            "y10": "IRLTLT01EZM156N",
-            "y2": "IR3TIB01EZM156N",
-            "cpi": "CP0000EZ19M086NEST",
-            "unemployment": "LRHUTTTTEZM156S",
-            "m2": "MYAGM2EZM196N",
-        },
-        "Bank of Japan": {
-            "y10": "IRLTLT01JPM156N",
-            "y2": "IR3TIB01JPM156N",
-            "cpi": "JPNCPIALLMINMEI",
-            "unemployment": "LRHUTTTTJPM156S",
-            "m2": "MYAGM2JPM189N",
-        },
         "Bank of England": {
             "y10": "IRLTLT01GBM156N",
             "y2": "IR3TIB01GBM156N",
             "cpi": "GBRCPIALLMINMEI",
             "unemployment": "LRHUTTTTGBM156S",
             "m2": "MABMM301GBM189S",
-        },
-        "MAS": {
-            "y10": "IRLTLT01SGM156N",
-            "y2": "IR3TIB01SGM156N",
-            "cpi": "SGPCPIALLMINMEI",
-            "unemployment": "LRHUTTTTSGM156S",
-            "m2": "MYAGM2SGM189N",
         },
     }
 
