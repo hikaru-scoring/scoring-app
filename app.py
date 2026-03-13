@@ -66,11 +66,14 @@ def main():
         options = [f"{s['name']} ({s['symbol']})" for s in top_5]
 
         if data is None:
-            st.warning("Stock data is currently unavailable (Yahoo Finance rate limit). Scores will load automatically — please check back later.")
             DUMMY_AXES = {"Future Focus": 100, "Market Position": 100, "Financial Strength": 100, "Cashflow Quality": 100, "People": 100}
             data = {"axes": DUMMY_AXES, "total": 500, "name": name, "price_hist": None, "current_price": 0, "pe": "N/A", "market_cap": 0}
+            data["_loading"] = True
 
         if data:
+
+            if data.get("_loading"):
+                st.warning("Stock data is currently unavailable (Yahoo Finance rate limit). Scores will load automatically — please check back later.")
 
             col_btn1, col_btn2 = st.columns(2)
 
