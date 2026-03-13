@@ -205,7 +205,11 @@ def _ecb_sdmx_series(dataset, key, last_n=25):
         for idx_str, val_arr in obs.items():
             if val_arr[0] is not None:
                 d[time_vals[int(idx_str)]["id"]] = float(val_arr[0])
-        return pd.Series(d).sort_index() if d else None
+        if not d:
+            return None
+        s = pd.Series(d)
+        s.index = pd.to_datetime(s.index)
+        return s.sort_index()
     except Exception:
         return None
 
