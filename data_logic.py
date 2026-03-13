@@ -220,7 +220,8 @@ def _fetch_mas_data():
     unemployment = _singstat_fetch("M182341", "Total Unemployment Rate")
 
     if cpi is None or m2 is None or unemployment is None:
-        st.error("MAS Data Error: SingStat data unavailable")
+        missing = [n for n, v in [("CPI", cpi), ("M2", m2), ("Unemployment", unemployment)] if v is None]
+        st.error(f"MAS Data Error: SingStat fetch failed for {missing}")
         return None
 
     # --- FRED: 10年債・短期金利（取れなければNone） ---
