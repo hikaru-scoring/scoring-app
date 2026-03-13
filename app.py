@@ -23,6 +23,8 @@ def main():
 
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
+    if "saved_cb_data" not in st.session_state:
+        st.session_state.saved_cb_data = None
 
     # --- タブ ---
     tab1, tab2, tab3 = st.tabs(["SGX", "Central Banks", "Commodities"])
@@ -337,6 +339,22 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             )
 
     # --- Central Banks TAB ---
+    CB_AXES = [
+        "Price Stability",
+        "Employment",
+        "Monetary Policy",
+        "Liquidity",
+        "Market Stability",
+    ]
+
+    cb_logic_descriptions = {
+        "Price Stability": "CPI YoY deviation from 2% target",
+        "Employment":      "Labor market health (inverse unemployment)",
+        "Monetary Policy": "Yield curve spread (10Y − 2Y)",
+        "Liquidity":       "M2 money supply YoY growth",
+        "Market Stability":"10Y yield volatility (20-day)",
+    }
+
     with tab2:
 
         st.markdown(
@@ -352,31 +370,110 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             "MAS"
         ]
 
-        bank = st.selectbox(
-            "Select Central Bank",
-            banks
-        )
+        bank = st.selectbox("Select Central Bank", banks)
 
         # FREDデータ取得
         bank_data = fetch_central_bank_data(bank)
 
         if bank_data:
 
-            st.subheader("Raw Macro Data")
+            cb_btn1, cb_btn2 = st.columns(2)
+            with cb_btn1:
+                cb_save = st.button("Save", key="cb_save")
+            with cb_btn2:
+                cb_clear = st.button("Clear", key="cb_clear")
 
-            col1, col2, col3 = st.columns(3)
+            if cb_save:
+                st.session_state.saved_cb_data = bank_data
+                st.rerun()
+            if cb_clear:
+                st.session_state.saved_cb_data = None
+                st.rerun()
 
-            with col1:
-                st.metric("10Y Yield", f"{bank_data['y10']:.2f}%")
-                st.metric("2Y Yield", f"{bank_data['y2']:.2f}%")
+            # --- 1. Total Score ---
+            display_total_cb = int(bank_data.get("total", 0))
 
-            with col2:
-                st.metric("CPI YoY", f"{bank_data['cpi_yoy']:.2f}%")
-                st.metric("Unemployment", f"{bank_data['unemployment']:.2f}%")
+            st.markdown(f"""
+            <div style="text-align:center; margin-top:40px; margin-bottom:30px;">
+                <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
+                <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
+                    {display_total_cb}
+                    <span style="font-size:35px; color:#BBB;">/ 1000</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
-            with col3:
-                st.metric("M2 YoY", f"{bank_data['m2_yoy']:.2f}%")
-                st.metric("Yield Curve", f"{bank_data['curve']:.2f}%")
+            # --- 2. レーダーチャート（左）＋ スコアカード（右） ---
+            cb_col_left, cb_col_right = st.columns([1.8, 1])
+
+            with cb_col_left:
+                st.markdown(
+                    "<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>",
+                    unsafe_allow_html=True
+                )
+                fig_cb = render_radar_chart(
+                    bank_data,
+                    st.session_state.saved_cb_data,
+                    CB_AXES
+                )
+                st.plotly_chart(fig_cb, use_container_width=True)
+
+            with cb_col_right:
+                st.markdown(
+                    "<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>",
+                    unsafe_allow_html=True
+                )
+
+                for k in CB_AXES:
+                    v1 = bank_data["axes"].get(k, 0)
+                    v2 = st.session_state.saved_cb_data["axes"].get(k, 0) if st.session_state.saved_cb_data else None
+                    desc_text = cb_logic_descriptions.get(k, "")
+
+                    score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
+                    if v2 is not None:
+                        score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
+
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background-color: #FFFFFF;
+                            padding: 20px;
+                            border-radius: 12px;
+                            margin-bottom: 12px;
+                            border: 1px solid #E0E0E0;
+                            border-left: 8px solid #2E7BE6;
+                            box-shadow: 2px 2px 5px rgba(0,0,0,0.07);
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <span style="font-size: 1.2em; font-weight: 800; color: #333333;">{k}</span>
+                                <span style="font-size: 1.7em; font-weight: 900; line-height: 1;">{score_html}</span>
+                            </div>
+                            <p style="font-size: 0.95em; color: #777777; margin: 0; line-height: 1.3; font-weight: 500;">{desc_text}</p>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+
+            # --- 3. Snapshot（Raw Macro Data） ---
+            st.markdown("<div class='section-title'>III. Macro Snapshot</div>", unsafe_allow_html=True)
+
+            saved_cb = st.session_state.saved_cb_data
+            snap1, snap2, snap3 = st.columns(3)
+
+            def snap_html(label, val1, val2, fmt="{:.2f}%"):
+                h = f'<span style="color:#2E7BE6;">{fmt.format(val1)}</span>'
+                if val2 is not None:
+                    h += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{fmt.format(val2)}</span>'
+                return f'<div class="card"><div style="font-size:11px; color:#999;">{label}</div><div style="font-size:22px; font-weight:900;">{h}</div></div>'
+
+            snap1.markdown(snap_html("10Y YIELD",     bank_data["y10"],         saved_cb["y10"]         if saved_cb else None), unsafe_allow_html=True)
+            snap2.markdown(snap_html("CPI YoY",       bank_data["cpi_yoy"],     saved_cb["cpi_yoy"]     if saved_cb else None), unsafe_allow_html=True)
+            snap3.markdown(snap_html("UNEMPLOYMENT",  bank_data["unemployment"], saved_cb["unemployment"] if saved_cb else None), unsafe_allow_html=True)
+
+            snap4, snap5, snap6 = st.columns(3)
+            snap4.markdown(snap_html("M2 YoY",        bank_data["m2_yoy"],      saved_cb["m2_yoy"]      if saved_cb else None), unsafe_allow_html=True)
+            snap5.markdown(snap_html("YIELD CURVE",   bank_data["curve"],       saved_cb["curve"]       if saved_cb else None), unsafe_allow_html=True)
+            snap6.markdown(snap_html("2Y YIELD",      bank_data["y2"],          saved_cb["y2"]          if saved_cb else None), unsafe_allow_html=True)
 
         else:
             st.warning("Central bank data could not be loaded.")
