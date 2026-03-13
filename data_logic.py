@@ -169,12 +169,126 @@ def fetch_oil_data():
         st.error(f"Oil Data Error: {e}")
         return None
 
+def _singstat_fetch(table_id, series_name):
+    """SingStat APIから指定シリーズをpd.Seriesで返す"""
+    import requests
+    url = f"https://tablebuilder.singstat.gov.sg/api/table/tabledata/{table_id}"
+    r = requests.get(url, timeout=15)
+    r.raise_for_status()
+    rows = r.json().get("Data", {}).get("row", [])
+    for row in rows:
+        if row.get("rowText", "").strip() == series_name:
+            records = {}
+            for c in row.get("columns", []):
+                k = c.get("key", "")
+                v = c.get("value", "")
+                if not v or v in ("na", "N.A.", "-"):
+                    continue
+                try:
+                    if "Q" in k:
+                        year, qpart = k.split()
+                        month = (int(qpart[0]) - 1) * 3 + 1
+                        ts = pd.Timestamp(f"{year}-{month:02d}-01")
+                    else:
+                        ts = pd.to_datetime(k, format="%Y %b")
+                    records[ts] = float(v)
+                except Exception:
+                    continue
+            if records:
+                return pd.Series(records).sort_index()
+    return None
+
+
+def _fetch_mas_data():
+    """MAS用データをSingStat + FREDから取得する"""
+    # --- SingStat: CPI ---
+    cpi = _singstat_fetch("M213751", "All Items")
+
+    # --- SingStat: M2（旧テーブル～2021/06 + 新テーブル2021/07～） ---
+    m2_old = _singstat_fetch("M920281", "M2")
+    m2_new = _singstat_fetch("M701111", "M2")
+    if m2_old is not None and m2_new is not None:
+        m2 = pd.concat([m2_old, m2_new]).sort_index()
+        m2 = m2[~m2.index.duplicated(keep="last")]
+    else:
+        m2 = m2_new if m2_new is not None else m2_old
+
+    # --- SingStat: 失業率（四半期） ---
+    unemployment = _singstat_fetch("M182341", "Total Unemployment Rate")
+
+    if cpi is None or m2 is None or unemployment is None:
+        st.error("MAS Data Error: SingStat data unavailable")
+        return None
+
+    # --- FRED: 10年債・短期金利（取れなければNone） ---
+    fred_key = st.secrets["FRED_API_KEY"]
+    fred = Fred(api_key=fred_key)
+    y10, y2 = None, None
+    try:
+        s = fred.get_series("IRLTLT01SGM156N").dropna()
+        if not s.empty:
+            y10 = s
+    except Exception:
+        pass
+    try:
+        s = fred.get_series("IR3TIB01SGM156N").dropna()
+        if not s.empty:
+            y2 = s
+    except Exception:
+        pass
+
+    try:
+        if len(cpi) < 13 or len(m2) < 13:
+            return None
+        cpi_yoy = ((cpi.iloc[-1] / cpi.iloc[-13]) - 1) * 100
+        m2_yoy  = ((m2.iloc[-1]  / m2.iloc[-13])  - 1) * 100
+        latest_unemployment = float(unemployment.iloc[-1])
+
+        latest_y10 = float(y10.iloc[-1]) if y10 is not None else None
+        latest_y2  = float(y2.iloc[-1])  if y2  is not None else None
+        y10_vol    = float(y10.tail(20).std()) if y10 is not None and len(y10) >= 20 else None
+
+        price_stability = float(max(0, min(200, 200 - abs(float(cpi_yoy) - 2) * 20)))
+        employment      = float(max(0, min(200, 200 - latest_unemployment * 15)))
+        liquidity       = float(max(0, min(200, 200 - abs(float(m2_yoy) - 5) * 10)))
+        monetary_policy = float(max(0, min(200, 100 + (latest_y10 - latest_y2) * 30))) \
+                          if latest_y10 is not None and latest_y2 is not None else 100.0
+        market_stability= float(max(0, min(200, 200 - y10_vol * 100))) \
+                          if y10_vol is not None else 100.0
+
+        cb_axes = {
+            "Price Stability": price_stability,
+            "Employment":      employment,
+            "Monetary Policy": monetary_policy,
+            "Liquidity":       liquidity,
+            "Market Stability":market_stability,
+        }
+        return {
+            "name":         "MAS",
+            "axes":         cb_axes,
+            "total":        int(sum(cb_axes.values())),
+            "y10":          latest_y10,
+            "y2":           latest_y2,
+            "cpi_yoy":      float(cpi_yoy),
+            "unemployment": latest_unemployment,
+            "m2_yoy":       float(m2_yoy),
+            "y10_vol":      y10_vol,
+            "curve":        float(latest_y10 - latest_y2) if latest_y10 is not None and latest_y2 is not None else None,
+            "y10_hist":     y10,
+        }
+    except Exception as e:
+        st.error(f"MAS Data Error: {e}")
+        return None
+
+
 @st.cache_data(ttl=86400)
 def fetch_central_bank_data(bank):
     """
     FREDから中央銀行スコア用の主要マクロ指標を取得する。
     返り値は app.py でそのまま使える辞書。
     """
+    if bank == "MAS":
+        return _fetch_mas_data()
 
     fred_key = st.secrets["FRED_API_KEY"]
     fred = Fred(api_key=fred_key)

@@ -461,7 +461,8 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             snap1, snap2, snap3 = st.columns(3)
 
             def snap_html(label, val1, val2, fmt="{:.2f}%"):
-                h = f'<span style="color:#2E7BE6;">{fmt.format(val1)}</span>'
+                v1_str = fmt.format(val1) if val1 is not None else "N/A"
+                h = f'<span style="color:#2E7BE6;">{v1_str}</span>'
                 if val2 is not None:
                     h += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{fmt.format(val2)}</span>'
                 return f'<div class="card"><div style="font-size:11px; color:#999;">{label}</div><div style="font-size:22px; font-weight:900;">{h}</div></div>'
@@ -478,26 +479,29 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             # --- 4. 10年債利回りチャート ---
             st.markdown("<div class='section-title'>IV. 10Y Yield History (5Y)</div>", unsafe_allow_html=True)
 
-            fig_y = go.Figure()
-            hist = bank_data["y10_hist"]
-            hist_5y = hist[hist.index >= (hist.index[-1] - pd.DateOffset(years=5))]
+            if bank_data.get("y10_hist") is not None:
+                fig_y = go.Figure()
+                hist = bank_data["y10_hist"]
+                hist_5y = hist[hist.index >= (hist.index[-1] - pd.DateOffset(years=5))]
 
-            if saved_cb and "y10_hist" in saved_cb:
-                s_hist = saved_cb["y10_hist"]
-                s_hist_5y = s_hist[s_hist.index >= (s_hist.index[-1] - pd.DateOffset(years=5))]
-                fig_y.add_trace(go.Scatter(x=hist_5y.index, y=hist_5y.values, mode='lines', name=bank_data["name"], line=dict(color='#2E7BE6', width=3)))
-                fig_y.add_trace(go.Scatter(x=s_hist_5y.index, y=s_hist_5y.values, mode='lines', name=saved_cb["name"], line=dict(color='#F4A261', width=3)))
+                if saved_cb and saved_cb.get("y10_hist") is not None:
+                    s_hist = saved_cb["y10_hist"]
+                    s_hist_5y = s_hist[s_hist.index >= (s_hist.index[-1] - pd.DateOffset(years=5))]
+                    fig_y.add_trace(go.Scatter(x=hist_5y.index, y=hist_5y.values, mode='lines', name=bank_data["name"], line=dict(color='#2E7BE6', width=3)))
+                    fig_y.add_trace(go.Scatter(x=s_hist_5y.index, y=s_hist_5y.values, mode='lines', name=saved_cb["name"], line=dict(color='#F4A261', width=3)))
+                else:
+                    fig_y.add_trace(go.Scatter(x=hist_5y.index, y=hist_5y.values, mode='lines', name=bank_data["name"], line=dict(color='#2E7BE6', width=3)))
+
+                fig_y.update_layout(
+                    plot_bgcolor='white',
+                    height=400,
+                    margin=dict(l=0, r=0, t=20, b=0),
+                    hovermode="x unified",
+                    yaxis_title="Yield (%)"
+                )
+                st.plotly_chart(fig_y, use_container_width=True)
             else:
-                fig_y.add_trace(go.Scatter(x=hist_5y.index, y=hist_5y.values, mode='lines', name=bank_data["name"], line=dict(color='#2E7BE6', width=3)))
-
-            fig_y.update_layout(
-                plot_bgcolor='white',
-                height=400,
-                margin=dict(l=0, r=0, t=20, b=0),
-                hovermode="x unified",
-                yaxis_title="Yield (%)"
-            )
-            st.plotly_chart(fig_y, use_container_width=True)
+                st.info("10Y Yield data is not available for MAS via FRED.")
 
         else:
             st.warning("Central bank data could not be loaded.")
