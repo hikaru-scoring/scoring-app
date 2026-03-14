@@ -292,13 +292,7 @@ def main():
 </div>
 
 <div style="background: #f8fafc; padding: 35px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #f1f5f9;">
-<div style="font-size: 1.4em; color: #7f8c8d; text-decoration: line-through; text-decoration-thickness: 2px; margin-bottom: 5px; font-weight: 700;">Standard: S$99 / MONTH</div>
-<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$50 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
-<div style="display: inline-block; background-color: #EBF5FF; padding: 6px 16px; border-radius: 20px; margin-top: 10px; border: 1px solid #D0E7FF;">
-<p style="font-size: 0.9em; color: #2E7BE6; margin: 0; font-weight: 800; letter-spacing: 0.5px;">
-EXCLUSIVE: S$50 Rate for the First 30 Members — Valid for 3 Months
-</p>
-</div>
+<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$500 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
 </div>
 
 <div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">
