@@ -22,9 +22,8 @@ def main():
     #inject_css()
     st.markdown("""
     <style>
-    .block-container { padding-top: 0rem !important; }
+    .block-container { padding-top: 1rem !important; }
     header[data-testid="stHeader"] { display: none !important; }
-    div[data-testid="stTabs"] { margin-top: -1rem; }
     </style>
     """, unsafe_allow_html=True)
 
