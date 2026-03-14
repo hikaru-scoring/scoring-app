@@ -22,8 +22,9 @@ def main():
     #inject_css()
     st.markdown("""
     <style>
-    .block-container { padding-top: 0.5rem !important; }
+    .block-container { padding-top: 0rem !important; }
     header[data-testid="stHeader"] { display: none !important; }
+    div[data-testid="stTabs"] { margin-top: -1rem; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -171,18 +172,15 @@ def main():
                 # 指標カードの生成（25% Enlarged Version）
                 for i, k in enumerate(AXES):
 
-                    v1 = data["axes"].get(k, 0)  # 現在の資産（青）
-                    v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None  # 保存済み（オレンジ）
+                    v1 = data["axes"].get(k, 0)
+                    v2 = st.session_state.saved_data["axes"].get(k, 0) if st.session_state.saved_data else None
 
                     display_label = oil_labels[i] if is_oil else k
                     desc_text = oil_descriptions.get(display_label, "") if is_oil else logic_descriptions.get(k, "")
 
-                    # 比較中は現在選択をオレンジ、保存済みを青。単独表示は青。
-                    c1 = '#F4A261' if v2 is not None else '#2E7BE6'
-                    score_html = f'<span style="color: {c1};">{int(v1)}</span>'
-
+                    score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
                     if v2 is not None:
-                        score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #2E7BE6;">{int(v2)}</span>'
+                        score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
 
                     st.markdown(
                         f"""
@@ -217,8 +215,8 @@ def main():
                     s_data = st.session_state.saved_data
                     y1 = (data['price_hist'] / data['price_hist'].iloc[0] - 1) * 100
                     y2 = (s_data['price_hist'] / s_data['price_hist'].iloc[0] - 1) * 100
-                    fig_p.add_trace(go.Scatter(x=y1.index, y=y1.values, mode='lines', name=name, line=dict(color='#F4A261', width=3)))
-                    fig_p.add_trace(go.Scatter(x=y2.index, y=y2.values, mode='lines', name=s_data['name'], line=dict(color='#2E7BE6', width=3)))
+                    fig_p.add_trace(go.Scatter(x=y1.index, y=y1.values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
+                    fig_p.add_trace(go.Scatter(x=y2.index, y=y2.values, mode='lines', name=s_data['name'], line=dict(color='#F4A261', width=3)))
                     fig_p.update_layout(yaxis_title="Return (%)")
                 else:
                     fig_p.add_trace(go.Scatter(x=data['price_hist'].index, y=data['price_hist'].values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
@@ -245,11 +243,9 @@ def main():
             p1 = data.get("current_price", 0)
             p2 = saved.get("current_price") if saved else None
 
-            p1_color = '#F4A261' if p2 is not None else '#2E7BE6'
-            p_html = f'<span style="color:{p1_color};">{p1:.2f}</span>'
-
+            p_html = f'<span style="color:#2E7BE6;">{p1:.2f}</span>'
             if p2 is not None:
-                p_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#2E7BE6;">{p2:.2f}</span>'
+                p_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{p2:.2f}</span>'
 
             s1.markdown(
                 f'<div class="card"><div style="font-size:11px; color:#999;">PRICE</div><div style="font-size:22px; font-weight:900;">{p_html}</div></div>',
@@ -261,10 +257,9 @@ def main():
             pe2 = saved.get("pe") if saved else None
             pe2_txt = f"{pe2:.1f}" if isinstance(pe2, (int, float)) and pe2 != 0 else "N/A"
 
-            pe1_color = '#F4A261' if saved else '#2E7BE6'
-            pe_html = f'<span style="color:{pe1_color};">{pe1_txt}</span>'
+            pe_html = f'<span style="color:#2E7BE6;">{pe1_txt}</span>'
             if saved:
-                pe_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#2E7BE6;">{pe2_txt}</span>'
+                pe_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{pe2_txt}</span>'
 
             s2.markdown(
                 f'<div class="card"><div style="font-size:11px; color:#999;">P/E RATIO</div><div style="font-size:22px; font-weight:900;">{pe_html}</div></div>',
@@ -275,11 +270,10 @@ def main():
             cap1 = data.get("market_cap", 0)
             cap2 = saved.get("market_cap", 0) if saved else None
 
-            cap1_color = '#F4A261' if cap2 is not None else '#2E7BE6'
-            cap_html = f'<span style="color:{cap1_color};">{cap1/1e9:.1f}B</span>'
+            cap_html = f'<span style="color:#2E7BE6;">{cap1/1e9:.1f}B</span>'
             if cap2 is not None:
                 cap2_txt = f"{cap2/1e9:.1f}B" if cap2 > 0 else "N/A"
-                cap_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#2E7BE6;">{cap2_txt}</span>'
+                cap_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{cap2_txt}</span>'
 
             s3.markdown(
                 f'<div class="card"><div style="font-size:11px; color:#999;">MARKET CAP</div><div style="font-size:22px; font-weight:900;">{cap_html}</div></div>',
@@ -428,9 +422,9 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             display_total_cb = int(bank_data.get("total", 0))
 
             st.markdown(f"""
-            <div style="text-align:center; margin-top:40px; margin-bottom:30px;">
+            <div style="text-align:center; margin-top:4px; margin-bottom:10px;">
                 <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
-                <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
+                <div style="font-size:90px; font-weight:800; color:#2E7BE6; line-height:1;">
                     {display_total_cb}
                     <span style="font-size:35px; color:#BBB;">/ 1000</span>
                 </div>
@@ -531,7 +525,9 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                     height=400,
                     margin=dict(l=0, r=0, t=20, b=0),
                     hovermode="x unified",
-                    yaxis_title="Yield (%)"
+                    yaxis_title="Yield (%)",
+                    clickmode='none',
+                    dragmode=False
                 )
                 st.plotly_chart(fig_y, use_container_width=True)
             else:
@@ -599,9 +595,9 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
             # --- 1. Total Score ---
             st.markdown(f"""
-            <div style="text-align:center; margin-top:40px; margin-bottom:30px;">
+            <div style="text-align:center; margin-top:4px; margin-bottom:10px;">
                 <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
-                <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
+                <div style="font-size:90px; font-weight:800; color:#2E7BE6; line-height:1;">
                     {comm_data['total']}
                     <span style="font-size:35px; color:#BBB;">/ 1000</span>
                 </div>
@@ -671,7 +667,9 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                 height=400,
                 margin=dict(l=0, r=0, t=20, b=0),
                 hovermode="x unified",
-                yaxis_title="Price (USD)"
+                yaxis_title="Price (USD)",
+                clickmode='none',
+                dragmode=False
             )
             st.plotly_chart(fig_cp, use_container_width=True)
 

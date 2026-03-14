@@ -26,18 +26,15 @@ def inject_css():
 def render_radar_chart(data, saved_data, axes_labels):
     fig = go.Figure()
     v = list(data["axes"].values()) + [list(data["axes"].values())[0]]
-    # 比較中は現在選択をオレンジ、保存済みを青。単独表示は青。
-    current_color = '#F4A261' if saved_data else '#2E7BE6'
-    current_fill  = 'rgba(244, 162, 97, 0.1)' if saved_data else 'rgba(46, 123, 230, 0.1)'
     fig.add_trace(go.Scatterpolar(
         r=v, theta=axes_labels+[axes_labels[0]], fill='toself',
-        fillcolor=current_fill, line_color=current_color, line=dict(width=4), name=data['name']
+        fillcolor='rgba(46, 123, 230, 0.1)', line_color='#2E7BE6', line=dict(width=4), name=data['name']
     ))
     if saved_data:
         v_s = list(saved_data["axes"].values()) + [list(saved_data["axes"].values())[0]]
         fig.add_trace(go.Scatterpolar(
             r=v_s, theta=axes_labels+[axes_labels[0]], fill='toself',
-            fillcolor='rgba(46, 123, 230, 0.1)', line_color='#2E7BE6', line=dict(width=3), name=saved_data['name']
+            fillcolor='rgba(244, 162, 97, 0.1)', line_color='#F4A261', line=dict(width=3), name=saved_data['name']
         ))
     fig.update_layout(
         polar=dict(
