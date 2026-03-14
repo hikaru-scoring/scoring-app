@@ -24,6 +24,8 @@ def main():
     <style>
     .block-container { padding-top: 1rem !important; }
     header[data-testid="stHeader"] { display: none !important; }
+    section[data-testid="stSidebar"] { display: none !important; }
+    button[data-testid="collapsedControl"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
