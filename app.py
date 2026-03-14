@@ -286,7 +286,32 @@ def main():
                 unsafe_allow_html=True
             )
 
-            # --- VII. PRE-ORDER SECTION (Branded White Edition) ---
+            # --- VII. METHODOLOGY ---
+            with st.expander("How does the scoring work?"):
+                st.markdown("### FRS-1000 Scoring Framework")
+                st.markdown("Each asset is scored across **5 axes**, each worth up to **200 points** (max total: **1,000 points**). This is a screening tool — not a buy/sell recommendation.")
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    st.markdown("""
+**Future Focus**
+Momentum (price vs moving average) × P/E valuation.
+
+**Market Position**
+Market capitalisation × inverse price volatility.
+
+**Financial Strength**
+Price resilience (vs 52W high) × debt-to-equity ratio.
+""")
+                with col_m2:
+                    st.markdown("""
+**Cashflow Quality**
+Return on Equity (ROE) — capital efficiency.
+
+**People**
+Long-term price growth + dividend yield.
+""")
+
+            # --- VIII. PRE-ORDER SECTION (Branded White Edition) ---
             st.markdown("<br><br>", unsafe_allow_html=True)
 
             st.markdown(
