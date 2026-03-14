@@ -40,8 +40,12 @@ def render_radar_chart(data, saved_data, axes_labels):
             fillcolor='rgba(46, 123, 230, 0.1)', line_color='#2E7BE6', line=dict(width=3), name=saved_data['name']
         ))
     fig.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 200], gridcolor="#F0F0F0"), bgcolor='white'),
-        showlegend=True, margin=dict(l=50, r=50, t=20, b=20), height=500,clickmode='none', 
+        polar=dict(
+            radialaxis=dict(visible=True, range=[0, 200], gridcolor="#F0F0F0"),
+            angularaxis=dict(rotation=90, direction="clockwise"),
+            bgcolor='white'
+        ),
+        showlegend=True, margin=dict(l=50, r=50, t=20, b=20), height=500, clickmode='none',
         dragmode=False
     )
     return fig
