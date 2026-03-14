@@ -131,7 +131,7 @@ def fetch_commodity_data(commodity):
 
     ticker = yf.Ticker(ticker_sym)
     try:
-        hist = ticker.history(period="2y")
+        hist = ticker.history(period="5y")
         if hist.empty:
             return None
 

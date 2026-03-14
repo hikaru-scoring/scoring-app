@@ -580,7 +580,7 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             cs4.markdown(comm_snap("20D VOL",    comm_data["vol_20d"],       saved_cm["vol_20d"]       if saved_cm else None, "{:.2f}%"),    unsafe_allow_html=True)
 
             # --- 4. Price History ---
-            st.markdown("<div class='section-title'>IV. Price History (2Y)</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>IV. Price History (5Y)</div>", unsafe_allow_html=True)
 
             fig_cp = go.Figure()
             ph = comm_data["price_hist"]
