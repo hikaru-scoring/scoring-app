@@ -64,7 +64,7 @@ def main():
         )
 
         st.markdown(
-            f'<div class="company-header">{name}</div>',
+            f'<div style="font-size:1.1em; font-weight:700; color:#333; margin:4px 0 2px;">{name}</div>',
             unsafe_allow_html=True
         )
 
@@ -105,9 +105,9 @@ def main():
             display_total = int(data.get("total", 0))
 
             st.markdown(f"""
-            <div style="text-align:center; margin-top:10px; margin-bottom:20px;">
+            <div style="text-align:center; margin-top:4px; margin-bottom:10px;">
                 <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
-                <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
+                <div style="font-size:90px; font-weight:800; color:#2E7BE6; line-height:1;">
                     {display_total}
                     <span style="font-size:35px; color:#BBB;">/ 1000</span>
                 </div>
