@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
-from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data
+from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data, fetch_news
 
 APP_TITLE = "FRS-1000 — SGX Dashboard"
 
@@ -286,7 +286,22 @@ def main():
                 unsafe_allow_html=True
             )
 
-            # --- VII. METHODOLOGY ---
+            # --- VII. NEWS ---
+            st.markdown("<div class='section-title'>VII. Latest News</div>", unsafe_allow_html=True)
+            news_items = fetch_news(f"{symbol}.SI")
+            if news_items:
+                for item in news_items:
+                    st.markdown(
+                        f'<div style="padding:10px 0; border-bottom:1px solid #F0F0F0;">'
+                        f'<a href="{item["link"]}" target="_blank" style="font-size:0.95em; font-weight:600; color:#1e3a8a; text-decoration:none;">{item["title"]}</a>'
+                        f'<div style="font-size:0.8em; color:#999; margin-top:3px;">{item["publisher"]} · {item["date"]}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.caption("No recent news available.")
+
+            # --- VIII. METHODOLOGY ---
             with st.expander("How does the scoring work?"):
                 st.markdown("### FRS-1000 Scoring Framework")
                 st.markdown("Each asset is scored across **5 axes**, each worth up to **200 points** (max total: **1,000 points**).")
@@ -636,6 +651,23 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                 yaxis_title="Price (USD)"
             )
             st.plotly_chart(fig_cp, use_container_width=True)
+
+            # --- 5. News ---
+            st.markdown("<div class='section-title'>V. Latest News</div>", unsafe_allow_html=True)
+            comm_ticker_map = {"WTI Crude Oil": "CL=F", "Gold": "GC=F", "Copper": "HG=F"}
+            comm_ticker = comm_ticker_map.get(asset, "CL=F")
+            comm_news = fetch_news(comm_ticker)
+            if comm_news:
+                for item in comm_news:
+                    st.markdown(
+                        f'<div style="padding:10px 0; border-bottom:1px solid #F0F0F0;">'
+                        f'<a href="{item["link"]}" target="_blank" style="font-size:0.95em; font-weight:600; color:#1e3a8a; text-decoration:none;">{item["title"]}</a>'
+                        f'<div style="font-size:0.8em; color:#999; margin-top:3px;">{item["publisher"]} · {item["date"]}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.caption("No recent news available.")
 
         else:
             st.warning("Commodity data could not be loaded.")

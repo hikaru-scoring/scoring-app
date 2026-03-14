@@ -495,3 +495,37 @@ def fetch_central_bank_data(bank):
     except Exception as e:
         st.error(f"Central Bank Data Error: {e}")
         return None        
+@st.cache_data(ttl=3600)
+def fetch_news(ticker_symbol, max_items=5):
+    """
+    指定ティッカーのニュースヘッドラインを取得する。
+    タイトル・リンク・メディア名・日時のみ返す（本文は取得しない）。
+    """
+    try:
+        import datetime
+        ticker = yf.Ticker(ticker_symbol)
+        raw = ticker.news or []
+        results = []
+        for item in raw[:max_items]:
+            content = item.get("content", {})
+            title = content.get("title") or item.get("title", "")
+            link = (content.get("canonicalUrl", {}) or {}).get("url") or \
+                   (content.get("clickThroughUrl", {}) or {}).get("url") or \
+                   item.get("link", "")
+            publisher = (content.get("provider", {}) or {}).get("displayName") or \
+                        item.get("publisher", "")
+            pub_ts = content.get("pubDate") or ""
+            if pub_ts:
+                try:
+                    dt = datetime.datetime.fromisoformat(pub_ts.replace("Z", "+00:00"))
+                    pub_str = dt.strftime("%b %d, %Y")
+                except Exception:
+                    pub_str = pub_ts[:10]
+            else:
+                ts = item.get("providerPublishTime", 0)
+                pub_str = datetime.datetime.utcfromtimestamp(ts).strftime("%b %d, %Y") if ts else ""
+            if title and link:
+                results.append({"title": title, "link": link, "publisher": publisher, "date": pub_str})
+        return results
+    except Exception:
+        return []
