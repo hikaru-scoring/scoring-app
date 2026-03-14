@@ -537,6 +537,29 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             else:
                 st.info("10Y Yield data is not available for MAS via FRED.")
 
+            # --- 5. News ---
+            st.markdown("<div class='section-title'>V. Latest News</div>", unsafe_allow_html=True)
+            cb_ticker_map = {
+                "Federal Reserve":        "^TNX",
+                "European Central Bank":  "EURUSD=X",
+                "Bank of Japan":          "JPY=X",
+                "Bank of England":        "GBPUSD=X",
+                "MAS":                    "SGD=X",
+            }
+            cb_ticker = cb_ticker_map.get(bank, "^TNX")
+            cb_news = fetch_news(cb_ticker)
+            if cb_news:
+                for item in cb_news:
+                    st.markdown(
+                        f'<div style="padding:10px 0; border-bottom:1px solid #F0F0F0;">'
+                        f'<a href="{item["link"]}" target="_blank" style="font-size:0.95em; font-weight:600; color:#1e3a8a; text-decoration:none;">{item["title"]}</a>'
+                        f'<div style="font-size:0.8em; color:#999; margin-top:3px;">{item["publisher"]} · {item["date"]}</div>'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.caption("No recent news available.")
+
         else:
             st.warning("Central bank data could not be loaded.")
 
