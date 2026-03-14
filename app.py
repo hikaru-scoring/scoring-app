@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
-from data_logic import fetch_data, fetch_central_bank_data
+from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data
 
 APP_TITLE = "FRS-1000 — SGX Dashboard"
 
@@ -25,6 +25,8 @@ def main():
         st.session_state.saved_data = None
     if "saved_cb_data" not in st.session_state:
         st.session_state.saved_cb_data = None
+    if "saved_comm_data" not in st.session_state:
+        st.session_state.saved_comm_data = None
 
     # --- タブ ---
     tab1, tab2, tab3 = st.tabs(["SGX", "Central Banks", "Commodities"])
@@ -483,6 +485,16 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
         else:
             st.warning("Central bank data could not be loaded.")
 
+    COMM_AXES = ["Price Momentum", "Supply Stability", "Demand Signal", "Price Level", "Market Trend"]
+
+    comm_logic_descriptions = {
+        "Price Momentum":   "3-month price change trend",
+        "Supply Stability": "Inverse of 20-day price volatility",
+        "Demand Signal":    "Current price vs 1-year average",
+        "Price Level":      "Current price vs 52-week high",
+        "Market Trend":     "1-year price performance",
+    }
+
     with tab3:
 
         st.markdown(
@@ -490,18 +502,103 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             unsafe_allow_html=True
         )
 
-        assets = [
-            "WTI Crude Oil",
-            "Gold",
-            "Copper"
-        ]
+        assets = ["WTI Crude Oil", "Gold", "Copper"]
+        asset = st.selectbox("Select Commodity", assets)
 
-        asset = st.selectbox(
-            "Select Commodity",
-            assets
-        )
+        comm_data = fetch_commodity_data(asset)
 
-        st.info("Commodity scoring will appear here.")
+        if comm_data:
+
+            cm_btn1, cm_btn2 = st.columns(2)
+            with cm_btn1:
+                if st.button("Save", key="comm_save"):
+                    st.session_state.saved_comm_data = comm_data
+                    st.rerun()
+            with cm_btn2:
+                if st.button("Clear", key="comm_clear"):
+                    st.session_state.saved_comm_data = None
+                    st.rerun()
+
+            # --- 1. Total Score ---
+            st.markdown(f"""
+            <div style="text-align:center; margin-top:40px; margin-bottom:30px;">
+                <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
+                <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
+                    {comm_data['total']}
+                    <span style="font-size:35px; color:#BBB;">/ 1000</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- 2. Radar + Score Cards ---
+            cm_col_left, cm_col_right = st.columns([1.8, 1])
+
+            with cm_col_left:
+                st.markdown(
+                    "<div style='font-size: 1.1em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 5px;'>I. Intelligence Radar</div>",
+                    unsafe_allow_html=True
+                )
+                fig_cm = render_radar_chart(comm_data, st.session_state.saved_comm_data, COMM_AXES)
+                st.plotly_chart(fig_cm, use_container_width=True)
+
+            with cm_col_right:
+                st.markdown(
+                    "<div style='font-size: 0.9em; font-weight: bold; color: #333; margin-top: -10px; margin-bottom: 15px; border-left: 3px solid #2E7BE6; padding-left: 8px;'>II. ANALYSIS SCORE METRICS</div>",
+                    unsafe_allow_html=True
+                )
+                saved_cm = st.session_state.saved_comm_data
+                for k in COMM_AXES:
+                    v1 = comm_data["axes"].get(k, 0)
+                    v2 = saved_cm["axes"].get(k, 0) if saved_cm else None
+                    score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
+                    if v2 is not None:
+                        score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
+                    st.markdown(f"""
+                        <div style="background-color:#FFFFFF;padding:20px;border-radius:12px;margin-bottom:12px;border:1px solid #E0E0E0;border-left:8px solid #2E7BE6;box-shadow:2px 2px 5px rgba(0,0,0,0.07);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                <span style="font-size:1.2em;font-weight:800;color:#333;">{k}</span>
+                                <span style="font-size:1.7em;font-weight:900;line-height:1;">{score_html}</span>
+                            </div>
+                            <p style="font-size:0.95em;color:#777;margin:0;line-height:1.3;font-weight:500;">{comm_logic_descriptions.get(k, '')}</p>
+                        </div>
+                    """, unsafe_allow_html=True)
+
+            # --- 3. Snapshot ---
+            st.markdown("<div class='section-title'>III. Market Snapshot</div>", unsafe_allow_html=True)
+
+            def comm_snap(label, val, val2, fmt):
+                v1_str = fmt.format(val) if val is not None else "N/A"
+                h = f'<span style="color:#2E7BE6;">{v1_str}</span>'
+                if val2 is not None:
+                    h += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{fmt.format(val2)}</span>'
+                return f'<div class="card"><div style="font-size:11px; color:#999;">{label}</div><div style="font-size:22px; font-weight:900;">{h}</div></div>'
+
+            cs1, cs2, cs3, cs4 = st.columns(4)
+            cs1.markdown(comm_snap("PRICE",      comm_data["current_price"], saved_cm["current_price"] if saved_cm else None, "${:.2f}"),    unsafe_allow_html=True)
+            cs2.markdown(comm_snap("52W HIGH",   comm_data["high_52w"],      saved_cm["high_52w"]      if saved_cm else None, "${:.2f}"),    unsafe_allow_html=True)
+            cs3.markdown(comm_snap("YoY CHANGE", comm_data["yoy_change"],    saved_cm["yoy_change"]    if saved_cm else None, "{:.2f}%"),    unsafe_allow_html=True)
+            cs4.markdown(comm_snap("20D VOL",    comm_data["vol_20d"],       saved_cm["vol_20d"]       if saved_cm else None, "{:.2f}%"),    unsafe_allow_html=True)
+
+            # --- 4. Price History ---
+            st.markdown("<div class='section-title'>IV. Price History (2Y)</div>", unsafe_allow_html=True)
+
+            fig_cp = go.Figure()
+            ph = comm_data["price_hist"]
+            fig_cp.add_trace(go.Scatter(x=ph.index, y=ph.values, mode='lines', name=asset, line=dict(color='#2E7BE6', width=3)))
+            if saved_cm and saved_cm.get("price_hist") is not None:
+                sph = saved_cm["price_hist"]
+                fig_cp.add_trace(go.Scatter(x=sph.index, y=sph.values, mode='lines', name=saved_cm["name"], line=dict(color='#F4A261', width=3)))
+            fig_cp.update_layout(
+                plot_bgcolor='white',
+                height=400,
+                margin=dict(l=0, r=0, t=20, b=0),
+                hovermode="x unified",
+                yaxis_title="Price (USD)"
+            )
+            st.plotly_chart(fig_cp, use_container_width=True)
+
+        else:
+            st.warning("Commodity data could not be loaded.")
 
 
 # 💡 ここからは if data: ブロックの外側。一番左に配置

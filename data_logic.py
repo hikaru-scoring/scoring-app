@@ -116,56 +116,55 @@ def fetch_data(symbol, name):
 
 # data_logic.py の末尾に追記
 
-@st.cache_data(ttl=86400, persist="disk")
-def fetch_oil_data():
-    """WTI原油先物データを取得し、動的なマーケットスコアに変換する"""
-    ticker = yf.Ticker("CL=F")
+COMMODITY_TICKERS = {
+    "WTI Crude Oil": "CL=F",
+    "Gold":          "GC=F",
+    "Copper":        "HG=F",
+}
+
+@st.cache_data(ttl=3600)
+def fetch_commodity_data(commodity):
+    """商品先物データをYahoo Financeから取得しスコアに変換する"""
+    ticker_sym = COMMODITY_TICKERS.get(commodity)
+    if not ticker_sym:
+        return None
+
+    ticker = yf.Ticker(ticker_sym)
     try:
-        # この下の行の左側に、必ず半角スペースが「8個」入っている必要があります
-        hist = ticker.history(period="1y")
+        hist = ticker.history(period="2y")
         if hist.empty:
             return None
-        
-        # --- 本物志向の計算ロジック ---
-        last_price = hist['Close'].iloc[-1]
-        avg_price = hist['Close'].mean()
-        max_price = hist['Close'].max()
-        volatility = hist['Close'].pct_change().std() * 100 
-        
-        # 概念ペア・ロジック
-        demand_score = (last_price / avg_price) * 100
-        geo_risk_score = 100 + (volatility * 15)
-        price_level_score = (last_price / max_price) * 150
-        # 1. まず「recent_volatility」を計算して定義する（これが抜けていました）
-        recent_volatility = hist['Close'].pct_change().rolling(window=20).std().iloc[-1] * 100
 
-        # 2. 定義した後に、それを使ってスコアを出す
-        supply_stability = max(50, 180 - (recent_volatility * 40))
-        market_heat_score = (last_price / hist['Close'].iloc[0]) * 120
+        close = hist['Close']
+        last_price   = float(close.iloc[-1])
+        avg_1y       = float(close.tail(252).mean())
+        high_52w     = float(close.tail(252).max())
+        price_1y_ago = float(close.iloc[-252]) if len(close) >= 252 else float(close.iloc[0])
+        price_3m_ago = float(close.iloc[-63])  if len(close) >= 63  else float(close.iloc[0])
 
-        oil_axes = {
-            "Future Focus": min(demand_score, 200),
-            "Market Position": min(geo_risk_score, 200),
-            "Financial Strength": min(price_level_score, 200),
-            "Cashflow Quality": supply_stability,
-            "People": min(market_heat_score, 200)
+        vol_20d    = float(close.pct_change().tail(20).std() * 100)
+        yoy_change = ((last_price / price_1y_ago) - 1) * 100
+        mom_3m     = ((last_price / price_3m_ago) - 1) * 100
+
+        comm_axes = {
+            "Price Momentum":   float(min(max(100 + mom_3m * 2,               0), 200)),
+            "Supply Stability": float(min(max(200 - vol_20d * 8,              0), 200)),
+            "Demand Signal":    float(min(max((last_price / avg_1y) * 100,    0), 200)),
+            "Price Level":      float(min(max((last_price / high_52w) * 200,  0), 200)),
+            "Market Trend":     float(min(max(100 + yoy_change * 1.5,         0), 200)),
         }
-
-        # 5つの指標の合計を計算
-        
-        total_score = int(sum(oil_axes.values()))
 
         return {
-            "axes": oil_axes,
-            "total": total_score,
-            "name": "WTI CRUDE OIL", # 直接名前を書く
-            "price_hist": hist['Close'],
+            "name":          commodity,
+            "axes":          comm_axes,
+            "total":         int(sum(comm_axes.values())),
             "current_price": last_price,
-            "pe": 0,
-            "market_cap": 0
+            "high_52w":      high_52w,
+            "yoy_change":    yoy_change,
+            "vol_20d":       vol_20d,
+            "price_hist":    close,
         }
-    except Exception as e:
-        st.error(f"Oil Data Error: {e}")
+    except Exception:
         return None
 
 def _worldbank_fetch(indicator, country="SGP"):
