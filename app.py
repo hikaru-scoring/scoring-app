@@ -171,11 +171,12 @@ def main():
                     display_label = oil_labels[i] if is_oil else k
                     desc_text = oil_descriptions.get(display_label, "") if is_oil else logic_descriptions.get(k, "")
 
-                    # スコア表示のHTML（フォントサイズを25%アップ: 1.3em -> 1.7em / 0.7em -> 0.9em）
-                    score_html = f'<span style="color: #2E7BE6;">{int(v1)}</span>'
+                    # 比較中は現在選択をオレンジ、保存済みを青。単独表示は青。
+                    c1 = '#F4A261' if v2 is not None else '#2E7BE6'
+                    score_html = f'<span style="color: {c1};">{int(v1)}</span>'
 
                     if v2 is not None:
-                        score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #F4A261;">{int(v2)}</span>'
+                        score_html += f' <span style="color: #ccc; font-size: 0.9em; font-weight:bold; margin: 0 6px;">vs</span> <span style="color: #2E7BE6;">{int(v2)}</span>'
 
                     st.markdown(
                         f"""
@@ -210,8 +211,8 @@ def main():
                     s_data = st.session_state.saved_data
                     y1 = (data['price_hist'] / data['price_hist'].iloc[0] - 1) * 100
                     y2 = (s_data['price_hist'] / s_data['price_hist'].iloc[0] - 1) * 100
-                    fig_p.add_trace(go.Scatter(x=y1.index, y=y1.values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
-                    fig_p.add_trace(go.Scatter(x=y2.index, y=y2.values, mode='lines', name=s_data['name'], line=dict(color='#F4A261', width=3)))
+                    fig_p.add_trace(go.Scatter(x=y1.index, y=y1.values, mode='lines', name=name, line=dict(color='#F4A261', width=3)))
+                    fig_p.add_trace(go.Scatter(x=y2.index, y=y2.values, mode='lines', name=s_data['name'], line=dict(color='#2E7BE6', width=3)))
                     fig_p.update_layout(yaxis_title="Return (%)")
                 else:
                     fig_p.add_trace(go.Scatter(x=data['price_hist'].index, y=data['price_hist'].values, mode='lines', name=name, line=dict(color='#2E7BE6', width=3)))
@@ -236,10 +237,11 @@ def main():
             p1 = data.get("current_price", 0)
             p2 = saved.get("current_price") if saved else None
 
-            p_html = f'<span style="color:#2E7BE6;">{p1:.2f}</span>'
+            p1_color = '#F4A261' if p2 is not None else '#2E7BE6'
+            p_html = f'<span style="color:{p1_color};">{p1:.2f}</span>'
 
             if p2 is not None:
-                p_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{p2:.2f}</span>'
+                p_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#2E7BE6;">{p2:.2f}</span>'
 
             s1.markdown(
                 f'<div class="card"><div style="font-size:11px; color:#999;">PRICE</div><div style="font-size:22px; font-weight:900;">{p_html}</div></div>',
@@ -251,9 +253,10 @@ def main():
             pe2 = saved.get("pe") if saved else None
             pe2_txt = f"{pe2:.1f}" if isinstance(pe2, (int, float)) and pe2 != 0 else "N/A"
 
-            pe_html = f'<span style="color:#2E7BE6;">{pe1_txt}</span>'
+            pe1_color = '#F4A261' if saved else '#2E7BE6'
+            pe_html = f'<span style="color:{pe1_color};">{pe1_txt}</span>'
             if saved:
-                pe_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{pe2_txt}</span>'
+                pe_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#2E7BE6;">{pe2_txt}</span>'
 
             s2.markdown(
                 f'<div class="card"><div style="font-size:11px; color:#999;">P/E RATIO</div><div style="font-size:22px; font-weight:900;">{pe_html}</div></div>',
@@ -264,10 +267,11 @@ def main():
             cap1 = data.get("market_cap", 0)
             cap2 = saved.get("market_cap", 0) if saved else None
 
-            cap_html = f'<span style="color:#2E7BE6;">{cap1/1e9:.1f}B</span>'
+            cap1_color = '#F4A261' if cap2 is not None else '#2E7BE6'
+            cap_html = f'<span style="color:{cap1_color};">{cap1/1e9:.1f}B</span>'
             if cap2 is not None:
                 cap2_txt = f"{cap2/1e9:.1f}B" if cap2 > 0 else "N/A"
-                cap_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#F4A261;">{cap2_txt}</span>'
+                cap_html += f' <span style="font-size:0.5em; color:#666;">vs</span> <span style="color:#2E7BE6;">{cap2_txt}</span>'
 
             s3.markdown(
                 f'<div class="card"><div style="font-size:11px; color:#999;">MARKET CAP</div><div style="font-size:22px; font-weight:900;">{cap_html}</div></div>',
