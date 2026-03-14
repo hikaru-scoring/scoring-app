@@ -540,11 +540,11 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             # --- 5. News ---
             st.markdown("<div class='section-title'>V. Latest News</div>", unsafe_allow_html=True)
             cb_ticker_map = {
-                "Federal Reserve":        "^TNX",
-                "European Central Bank":  "EURUSD=X",
-                "Bank of Japan":          "JPY=X",
-                "Bank of England":        "GBPUSD=X",
-                "MAS":                    "SGD=X",
+                "Federal Reserve":        "TLT",
+                "European Central Bank":  "EZU",
+                "Bank of Japan":          "EWJ",
+                "Bank of England":        "EWU",
+                "MAS":                    "EWS",
             }
             cb_ticker = cb_ticker_map.get(bank, "^TNX")
             cb_news = fetch_news(cb_ticker)
