@@ -289,27 +289,36 @@ def main():
             # --- VII. METHODOLOGY ---
             with st.expander("How does the scoring work?"):
                 st.markdown("### FRS-1000 Scoring Framework")
-                st.markdown("Each asset is scored across **5 axes**, each worth up to **200 points** (max total: **1,000 points**). This is a screening tool — not a buy/sell recommendation.")
+                st.markdown("Each asset is scored across **5 axes**, each worth up to **200 points** (max total: **1,000 points**).")
+
                 col_m1, col_m2 = st.columns(2)
                 with col_m1:
                     st.markdown("""
-**Future Focus**
-Momentum (price vs moving average) × P/E valuation.
+**How to read the score**
+- **800–1000** — Strong across most dimensions
+- **600–799** — Solid, with some areas to watch
+- **400–599** — Mixed signals, warrants deeper analysis
+- **Below 400** — Significant weaknesses in multiple areas
 
-**Market Position**
-Market capitalisation × inverse price volatility.
-
-**Financial Strength**
-Price resilience (vs 52W high) × debt-to-equity ratio.
+**How to use the comparison**
+Press **Save** on any asset, then switch to another.
+The radar chart and score cards will show both side-by-side,
+making it easy to identify where one asset outperforms the other.
 """)
                 with col_m2:
                     st.markdown("""
-**Cashflow Quality**
-Return on Equity (ROE) — capital efficiency.
+**Data sources & update frequency**
+- Stock data: Yahoo Finance (refreshed every 24 hours)
+- Central bank data: FRED, ECB API, World Bank (refreshed every 24 hours)
+- Commodity data: Yahoo Finance (refreshed every 24 hours)
 
-**People**
-Long-term price growth + dividend yield.
+**Premium Plan**
+The current version covers selected SGX stocks for demonstration.
+Subscribers get access to **all SGX-listed stocks** with real-time,
+institutional-grade data and full historical scoring.
 """)
+
+                st.caption("This tool is for informational and screening purposes only. It does not constitute investment advice. All investment decisions are made at the user's own risk.")
 
             # --- VIII. PRE-ORDER SECTION (Branded White Edition) ---
             st.markdown("<br><br>", unsafe_allow_html=True)
