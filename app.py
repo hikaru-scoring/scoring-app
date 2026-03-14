@@ -83,7 +83,7 @@ def main():
             if data.get("_loading"):
                 st.warning("Stock data is currently unavailable (Yahoo Finance rate limit). Scores will load automatically — please check back later.")
 
-            col_btn1, col_btn2 = st.columns(2)
+            col_btn1, col_btn2, col_btn_rest = st.columns([1, 1, 8])
 
             with col_btn1:
                 save_it = st.button("Save")
@@ -92,11 +92,11 @@ def main():
                 clear_it = st.button("Clear")
 
             # 3. ボタンごとの動作設定
-            if save_it: 
+            if save_it:
                 st.session_state.saved_data = data
                 st.rerun()
 
-            if clear_it: 
+            if clear_it:
                 st.session_state.saved_data = None
                 st.rerun()
 
@@ -105,7 +105,7 @@ def main():
             display_total = int(data.get("total", 0))
 
             st.markdown(f"""
-            <div style="text-align:center; margin-top:40px; margin-bottom:30px;">
+            <div style="text-align:center; margin-top:10px; margin-bottom:20px;">
                 <div style="font-size:14px; letter-spacing:2px; color:#666;">TOTAL SCORE</div>
                 <div style="font-size:90px; font-weight:800; color:#2E7BE6;">
                     {display_total}
