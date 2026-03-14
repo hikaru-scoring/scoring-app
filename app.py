@@ -228,7 +228,9 @@ def main():
                     plot_bgcolor='white',
                     height=400,
                     margin=dict(l=0, r=0, t=20, b=0),
-                    hovermode="x unified"
+                    hovermode="x unified",
+                    clickmode='none',
+                    dragmode=False
                 )
                 st.plotly_chart(fig_p, use_container_width=True)
 
