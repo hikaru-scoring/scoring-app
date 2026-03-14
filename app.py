@@ -397,11 +397,11 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
         )
 
         banks = [
+            "MAS",
             "Federal Reserve",
             "European Central Bank",
             "Bank of Japan",
             "Bank of England",
-            "MAS"
         ]
 
         bank = st.selectbox("Select Central Bank", banks)
