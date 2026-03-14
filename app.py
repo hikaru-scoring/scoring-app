@@ -20,6 +20,12 @@ st.set_page_config(page_title=APP_TITLE, layout="wide")
 
 def main():
     #inject_css()
+    st.markdown("""
+    <style>
+    .block-container { padding-top: 0.5rem !important; }
+    header[data-testid="stHeader"] { display: none !important; }
+    </style>
+    """, unsafe_allow_html=True)
 
     if "saved_data" not in st.session_state:
         st.session_state.saved_data = None
