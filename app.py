@@ -405,7 +405,7 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
         if bank_data:
 
-            cb_btn1, cb_btn2 = st.columns(2)
+            cb_btn1, cb_btn2, _ = st.columns([1, 1, 8])
             with cb_btn1:
                 cb_save = st.button("Save", key="cb_save")
             with cb_btn2:
@@ -583,7 +583,7 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
         if comm_data:
 
-            cm_btn1, cm_btn2 = st.columns(2)
+            cm_btn1, cm_btn2, _ = st.columns([1, 1, 8])
             with cm_btn1:
                 if st.button("Save", key="comm_save"):
                     st.session_state.saved_comm_data = comm_data
