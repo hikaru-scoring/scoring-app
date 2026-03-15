@@ -285,7 +285,7 @@ def main():
         if data:
 
             if data.get("_loading"):
-                st.warning("Stock data is currently unavailable (Yahoo Finance rate limit). Scores will load automatically — please check back later.")
+                st.info("Data is loading. Please refresh in a moment.", icon="⏳")
 
             # ロジック解説（PDF生成とスコアカード両方で使用）
             logic_descriptions = {
@@ -829,7 +829,7 @@ institutional-grade data and full historical scoring.
             render_pricing_section()
 
         else:
-            st.warning("Central bank data could not be loaded.")
+            st.info("Data temporarily unavailable. Please refresh shortly.", icon="⏳")
 
     COMM_AXES = ["Price Momentum", "Supply Stability", "Demand Signal", "Price Level", "Market Trend"]
 
@@ -1028,7 +1028,7 @@ natural gas, agricultural products, and more with real-time data.
             render_pricing_section()
 
         else:
-            st.warning("Commodity data could not be loaded.")
+            st.info("Data temporarily unavailable. Please refresh shortly.", icon="⏳")
 
     # --- Rankings TAB ---
     with tab4:
@@ -1466,7 +1466,7 @@ Rules:
                                     </div>
                                     """, unsafe_allow_html=True)
                                 except Exception as e:
-                                    st.error(f"AI report generation failed: {str(e)}")
+                                    st.info(f"AI report is temporarily unavailable. Please try again later.", icon="⚠️")
 
                     render_pricing_section()
 

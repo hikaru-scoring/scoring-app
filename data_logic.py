@@ -4,7 +4,7 @@ import yfinance as yf
 import streamlit as st
 from fredapi import Fred
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_data(symbol, name):
     """
     株価データと分析スコアを取得する関数。
@@ -122,7 +122,7 @@ COMMODITY_TICKERS = {
     "Copper":        "HG=F",
 }
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_commodity_data(commodity):
     """商品先物データをYahoo Financeから取得しスコアに変換する"""
     ticker_sym = COMMODITY_TICKERS.get(commodity)
@@ -495,7 +495,7 @@ def fetch_central_bank_data(bank):
     except Exception as e:
         # Central bank data error (silent)
         return None        
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=86400)
 def fetch_news(ticker_symbol, max_items=5):
     """
     指定ティッカーのニュースヘッドラインを取得する。
