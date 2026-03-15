@@ -1426,9 +1426,14 @@ natural gas, agricultural products, and more with real-time data.
             unsafe_allow_html=True
         )
         st.markdown(
-            "<p style='color:#64748b; margin-bottom:20px;'>What if you invested based on FRS-1000 scores? This backtest compares a score-based strategy against equal-weight buying.</p>",
+            "<p style='color:#64748b; margin-bottom:20px;'>What if you invested based on FRS-1000 scores? This hypothetical simulation compares a score-based strategy against equal-weight buying.</p>",
             unsafe_allow_html=True
         )
+        st.markdown("""
+        <div style="padding:10px 16px; background:#fef2f2; border-radius:8px; margin-bottom:20px; border-left:4px solid #ef4444; font-size:0.85em; color:#64748b;">
+            <strong style="color:#991b1b;">Important:</strong> This is a hypothetical simulation using historical data. It is <strong>not</strong> investment advice, a recommendation, or a guarantee of future performance. Past results do not predict future returns. All investment decisions should be made at your own discretion and risk.
+        </div>
+        """, unsafe_allow_html=True)
 
         bt_stocks = [
             {"name": "DBS Group", "symbol": "D05"},
