@@ -4,22 +4,28 @@ import yfinance as yf
 import streamlit as st
 from fredapi import Fred
 
-@st.cache_data(ttl=86400)
 def fetch_data(symbol, name):
     """
     株価データと分析スコアを取得する関数。
-    app.pyから呼び出される心臓部。
+    キャッシュは成功時のみ保持する。
     """
-    # 修正：ランダムな1.0〜3.0秒の待機を入れてブロック回避
-    import time
+    cache_key = f"_data_cache_{symbol}"
+    cache_time_key = f"_data_cache_time_{symbol}"
+    import time as _time
+    # 成功キャッシュが24時間以内なら再利用
+    if cache_key in st.session_state:
+        elapsed = _time.time() - st.session_state.get(cache_time_key, 0)
+        if elapsed < 86400:
+            return st.session_state[cache_key]
+
     import random
-    time.sleep(random.uniform(1.0, 3.0)) 
-    
+    _time.sleep(random.uniform(1.0, 3.0))
+
     ticker = yf.Ticker(f"{symbol}.SI")
     try:
 
         hist = ticker.history(period="5y")
-        
+
         if hist.empty: return None
         
         # --- ここから追記 ---
@@ -102,7 +108,7 @@ def fetch_data(symbol, name):
         
         # 合計スコアの算出
         total_score = int(sum(company_axes.values()))
-        return {
+        result = {
             "axes": company_axes,
             "total": total_score,
             "name": name,
@@ -111,6 +117,11 @@ def fetch_data(symbol, name):
             "pe": per if per else "N/A",
             "market_cap": m_cap if m_cap else 0
         }
+        # 成功時のみキャッシュ
+        import time as _time2
+        st.session_state[cache_key] = result
+        st.session_state[cache_time_key] = _time2.time()
+        return result
     except Exception:
         return None
 
@@ -122,9 +133,15 @@ COMMODITY_TICKERS = {
     "Copper":        "HG=F",
 }
 
-@st.cache_data(ttl=86400)
 def fetch_commodity_data(commodity):
-    """商品先物データをYahoo Financeから取得しスコアに変換する"""
+    """商品先物データをYahoo Financeから取得しスコアに変換する。成功時のみキャッシュ。"""
+    import time as _time
+    cache_key = f"_comm_cache_{commodity}"
+    cache_time_key = f"_comm_cache_time_{commodity}"
+    if cache_key in st.session_state:
+        if _time.time() - st.session_state.get(cache_time_key, 0) < 86400:
+            return st.session_state[cache_key]
+
     ticker_sym = COMMODITY_TICKERS.get(commodity)
     if not ticker_sym:
         return None
@@ -154,7 +171,7 @@ def fetch_commodity_data(commodity):
             "Market Trend":     float(min(max(100 + yoy_change * 1.5,         0), 200)),
         }
 
-        return {
+        result = {
             "name":          commodity,
             "axes":          comm_axes,
             "total":         int(sum(comm_axes.values())),
@@ -164,6 +181,10 @@ def fetch_commodity_data(commodity):
             "vol_20d":       vol_20d,
             "price_hist":    close,
         }
+        import time as _time2
+        st.session_state[cache_key] = result
+        st.session_state[cache_time_key] = _time2.time()
+        return result
     except Exception:
         return None
 
@@ -398,13 +419,26 @@ def _fetch_mas_data():
         return None
 
 
-@st.cache_data(ttl=86400)
 def fetch_central_bank_data(bank):
     """
     中央銀行スコア用の主要マクロ指標を取得する。
     ECB・BoJは公式APIを使用、Fed・BoEはFREDを使用。
-    返り値は app.py でそのまま使える辞書。
+    返り値は app.py でそのまま使える辞書。成功時のみキャッシュ。
     """
+    import time as _time
+    cache_key = f"_cb_cache_{bank}"
+    cache_time_key = f"_cb_cache_time_{bank}"
+    if cache_key in st.session_state:
+        if _time.time() - st.session_state.get(cache_time_key, 0) < 86400:
+            return st.session_state[cache_key]
+
+    result = _fetch_central_bank_data_inner(bank)
+    if result is not None:
+        st.session_state[cache_key] = result
+        st.session_state[cache_time_key] = _time.time()
+    return result
+
+def _fetch_central_bank_data_inner(bank):
     if bank == "MAS":
         return _fetch_mas_data()
     if bank == "European Central Bank":
@@ -495,7 +529,6 @@ def fetch_central_bank_data(bank):
     except Exception as e:
         # Central bank data error (silent)
         return None        
-@st.cache_data(ttl=86400)
 def fetch_news(ticker_symbol, max_items=5):
     """
     指定ティッカーのニュースヘッドラインを取得する。
