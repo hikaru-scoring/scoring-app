@@ -1424,7 +1424,7 @@ natural gas, agricultural products, and more with real-time data.
                                 try:
                                     import google.generativeai as genai
                                     genai.configure(api_key=gemini_key)
-                                    model = genai.GenerativeModel('gemini-2.0-flash')
+                                    model = genai.GenerativeModel('gemini-1.5-flash')
 
                                     # Build context for AI
                                     asset_summary = []
