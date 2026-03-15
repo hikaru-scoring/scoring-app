@@ -6,6 +6,20 @@ from datetime import datetime
 from fpdf import FPDF
 
 
+def _safe(text: str) -> str:
+    """Replace non-latin1 characters with ASCII equivalents for Helvetica."""
+    return (text
+            .replace("\u2212", "-")   # minus sign
+            .replace("\u2013", "-")   # en dash
+            .replace("\u2014", "-")   # em dash
+            .replace("\u00d7", "x")   # multiplication sign
+            .replace("\u2019", "'")   # right single quote
+            .replace("\u2018", "'")   # left single quote
+            .replace("\u201c", '"')   # left double quote
+            .replace("\u201d", '"')   # right double quote
+            .encode("latin-1", errors="replace").decode("latin-1"))
+
+
 class FRSReport(FPDF):
     BLUE = (46, 123, 230)
     DARK = (30, 41, 59)
@@ -41,10 +55,10 @@ def _section(pdf: FRSReport, title: str):
 def _kv_row(pdf: FRSReport, label: str, value: str):
     pdf.set_font("Helvetica", "", 10)
     pdf.set_text_color(*pdf.GRAY)
-    pdf.cell(60, 7, label)
+    pdf.cell(60, 7, _safe(label))
     pdf.set_font("Helvetica", "B", 10)
     pdf.set_text_color(*pdf.DARK)
-    pdf.cell(0, 7, value, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, _safe(value), new_x="LMARGIN", new_y="NEXT")
 
 
 def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
@@ -66,7 +80,7 @@ def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
     # --- Asset name ---
     pdf.set_font("Helvetica", "B", 16)
     pdf.set_text_color(*pdf.DARK)
-    pdf.cell(0, 10, f"{data['name']}  -  {tab_name}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, _safe(f"{data['name']}  -  {tab_name}"), new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
     # --- Total Score ---
@@ -112,7 +126,7 @@ def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
     for k in axes_labels:
         v = int(data["axes"].get(k, 0))
         pdf.set_text_color(*pdf.DARK)
-        pdf.cell(60, 7, k, border=1)
+        pdf.cell(60, 7, _safe(k), border=1)
 
         # Color-code the score
         if v >= 160:
@@ -127,7 +141,7 @@ def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(*pdf.GRAY)
         desc = logic_descriptions.get(k, "") if logic_descriptions else ""
-        pdf.cell(0, 7, desc, border=1, new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(0, 7, _safe(desc), border=1, new_x="LMARGIN", new_y="NEXT")
 
     pdf.ln(6)
 
