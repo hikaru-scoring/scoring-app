@@ -205,6 +205,12 @@ def main():
     <style>
     .block-container { padding-top: 1rem !important; }
     header[data-testid="stHeader"] { display: none !important; }
+    footer { display: none !important; }
+    .viewerBadge_container__r5tak { display: none !important; }
+    [data-testid="stActionButtonIcon"] { display: none !important; }
+    a[href*="github.com"] img { display: none !important; }
+    .styles_viewerBadge__CvC9N { display: none !important; }
+    #MainMenu { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
