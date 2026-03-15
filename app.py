@@ -49,23 +49,18 @@ def render_score_delta(asset_name: str, current_total: int):
 
 def generate_excel(data: dict, axes_labels: list, tab_name: str,
                    logic_descriptions: dict = None, snapshot: dict = None) -> bytes:
-    """スコアデータをExcelバイトとして返す"""
-    import io as _io
+    """スコアデータをCSVバイトとして返す（依存ゼロ）"""
     rows = []
     for k in axes_labels:
         desc = logic_descriptions.get(k, "") if logic_descriptions else ""
         rows.append({"Axis": k, "Score": int(data["axes"].get(k, 0)), "Description": desc})
     rows.append({"Axis": "TOTAL", "Score": int(data.get("total", 0)), "Description": ""})
-    df = pd.DataFrame(rows)
     if snapshot:
-        snap_rows = [{"Metric": label, "Value": value} for label, value in snapshot.items()]
-        df_snap = pd.DataFrame(snap_rows)
-    buf = _io.BytesIO()
-    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Scores", index=False)
-        if snapshot:
-            df_snap.to_excel(writer, sheet_name="Snapshot", index=False)
-    return buf.getvalue()
+        rows.append({"Axis": "", "Score": "", "Description": ""})
+        for label, value in snapshot.items():
+            rows.append({"Axis": label, "Score": value, "Description": ""})
+    df = pd.DataFrame(rows)
+    return df.to_csv(index=False).encode("utf-8")
 
 def render_daily_score_tracker(asset_name: str):
     """scores_history.json からデイリースコア推移チャートを表示する"""
@@ -213,7 +208,7 @@ def main():
 
             with col_btn4:
                 sgx_xlsx = generate_excel(data, AXES, "SGX", logic_descriptions, sgx_snapshot)
-                st.download_button("Excel", sgx_xlsx, file_name=f"FRS1000_{name.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                st.download_button("Excel", sgx_xlsx, file_name=f"FRS1000_{name.replace(' ', '_')}.csv", mime="text/csv")
 
             # 3. ボタンごとの動作設定
             if save_it:
@@ -558,7 +553,7 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                 st.download_button("PDF", cb_pdf, file_name=f"FRS1000_{bank.replace(' ', '_')}.pdf", mime="application/pdf", key="cb_pdf")
             with cb_btn4:
                 cb_xlsx = generate_excel(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot)
-                st.download_button("Excel", cb_xlsx, file_name=f"FRS1000_{bank.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="cb_xlsx")
+                st.download_button("Excel", cb_xlsx, file_name=f"FRS1000_{bank.replace(' ', '_')}.csv", mime="text/csv", key="cb_xlsx")
 
             if cb_save:
                 st.session_state.saved_cb_data = bank_data
@@ -825,7 +820,7 @@ institutional-grade data and full historical scoring.
                 st.download_button("PDF", comm_pdf, file_name=f"FRS1000_{asset.replace(' ', '_')}.pdf", mime="application/pdf", key="comm_pdf")
             with cm_btn4:
                 comm_xlsx = generate_excel(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot)
-                st.download_button("Excel", comm_xlsx, file_name=f"FRS1000_{asset.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="comm_xlsx")
+                st.download_button("Excel", comm_xlsx, file_name=f"FRS1000_{asset.replace(' ', '_')}.csv", mime="text/csv", key="comm_xlsx")
 
             # --- 1. Total Score ---
             st.markdown(f"""
