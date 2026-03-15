@@ -236,7 +236,7 @@ def main():
         company_name = st.text_input("Company name for PDF", value="", placeholder="e.g. ABC Capital Pte Ltd", key="wl_company")
 
     # --- タブ ---
-    tab1, tab2, tab3, tab4 = st.tabs(["SGX", "Central Banks", "Commodities", "Rankings"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["SGX", "Central Banks", "Commodities", "Rankings", "Portfolio"])
 
     # --- SGX TAB ---
     with tab1:
@@ -1131,6 +1131,218 @@ natural gas, agricultural products, and more with real-time data.
                 """, unsafe_allow_html=True)
         else:
             st.info("Loading scores... please wait a moment and refresh.")
+
+    # --- Portfolio TAB ---
+    with tab5:
+        st.markdown(
+            "<div style='font-size:1.5em; font-weight:900; color:#1e3a8a; margin-bottom:20px;'>Portfolio Analysis</div>",
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            "<p style='color:#64748b; margin-bottom:20px;'>Select assets and allocations to see your portfolio's combined FRS-1000 score.</p>",
+            unsafe_allow_html=True
+        )
+
+        # Available assets
+        all_sgx = [
+            {"name": "DBS Group", "symbol": "D05"},
+            {"name": "Singtel", "symbol": "Z74"},
+            {"name": "OCBC Bank", "symbol": "O39"},
+            {"name": "Keppel Ltd", "symbol": "BN4"},
+            {"name": "CapitaLand Investment", "symbol": "9CI"},
+        ]
+        all_cb = ["MAS", "Federal Reserve", "European Central Bank", "Bank of Japan", "Bank of England"]
+        all_comm = ["WTI Crude Oil", "Gold", "Copper"]
+
+        sgx_names = [s["name"] for s in all_sgx]
+        all_assets = sgx_names + all_cb + all_comm
+
+        selected = st.multiselect("Select assets for your portfolio", all_assets, default=["DBS Group", "Gold"], key="pf_select")
+
+        if selected:
+            # Weight inputs
+            st.markdown("**Set allocation weights (%)**")
+            weights = {}
+            weight_cols = st.columns(min(len(selected), 4))
+            for i, asset in enumerate(selected):
+                col = weight_cols[i % len(weight_cols)]
+                weights[asset] = col.number_input(asset, min_value=0, max_value=100, value=round(100 / len(selected)), key=f"pf_w_{asset}")
+
+            total_weight = sum(weights.values())
+
+            if total_weight == 0:
+                st.warning("Please assign weights to at least one asset.")
+            else:
+                # Normalize weights
+                norm_weights = {k: v / total_weight for k, v in weights.items()}
+
+                # Show weight bar
+                if total_weight != 100:
+                    st.info(f"Weights total {total_weight}%. They will be normalized automatically.")
+
+                # Fetch scores
+                pf_scores = {}
+                pf_axes = {}
+                errors = []
+
+                for asset in selected:
+                    if asset in sgx_names:
+                        sym = next(s["symbol"] for s in all_sgx if s["name"] == asset)
+                        d = fetch_data(sym, asset)
+                        if d and not d.get("_loading"):
+                            pf_scores[asset] = d
+                            pf_axes[asset] = {k: d["axes"].get(k, 0) for k in AXES}
+                        else:
+                            errors.append(asset)
+                    elif asset in all_cb:
+                        d = fetch_central_bank_data(asset)
+                        if d:
+                            pf_scores[asset] = d
+                            pf_axes[asset] = {k: d["axes"].get(k, 0) for k in CB_AXES}
+                        else:
+                            errors.append(asset)
+                    elif asset in all_comm:
+                        d = fetch_commodity_data(asset)
+                        if d:
+                            pf_scores[asset] = d
+                            pf_axes[asset] = {k: d["axes"].get(k, 0) for k in COMM_AXES}
+                        else:
+                            errors.append(asset)
+
+                if errors:
+                    st.warning(f"Could not load data for: {', '.join(errors)}")
+
+                if pf_scores:
+                    # Calculate weighted portfolio score
+                    weighted_total = sum(pf_scores[a]["total"] * norm_weights[a] for a in pf_scores if a in norm_weights)
+
+                    # Score color
+                    if weighted_total >= 800:
+                        score_color = "#10b981"
+                    elif weighted_total >= 600:
+                        score_color = "#2E7BE6"
+                    elif weighted_total >= 400:
+                        score_color = "#f59e0b"
+                    else:
+                        score_color = "#ef4444"
+
+                    # Portfolio total score display
+                    st.markdown(f"""
+                    <div style="text-align:center; padding:30px 0;">
+                        <div style="font-size:0.85em; font-weight:700; color:#94a3b8; letter-spacing:2px;">PORTFOLIO SCORE</div>
+                        <div style="font-size:4.5em; font-weight:900; color:{score_color}; line-height:1.1;">{int(weighted_total)}</div>
+                        <div style="font-size:1.2em; color:#ccc; font-weight:300;">/ 1000</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # Individual asset breakdown
+                    st.markdown("<div style='font-size:1.1em; font-weight:700; color:#333; margin:20px 0 10px; border-left:3px solid #2E7BE6; padding-left:8px;'>Asset Breakdown</div>", unsafe_allow_html=True)
+
+                    # Sort by score descending
+                    sorted_assets = sorted(pf_scores.keys(), key=lambda a: pf_scores[a]["total"], reverse=True)
+
+                    for asset in sorted_assets:
+                        d = pf_scores[asset]
+                        score = int(d["total"])
+                        w_pct = norm_weights.get(asset, 0) * 100
+                        contribution = score * norm_weights.get(asset, 0)
+
+                        if score >= 800:
+                            a_color = "#10b981"
+                        elif score >= 600:
+                            a_color = "#2E7BE6"
+                        elif score >= 400:
+                            a_color = "#f59e0b"
+                        else:
+                            a_color = "#ef4444"
+
+                        # Category label
+                        if asset in sgx_names:
+                            cat, cat_color = "SGX", "#2E7BE6"
+                        elif asset in all_cb:
+                            cat, cat_color = "Central Bank", "#8b5cf6"
+                        else:
+                            cat, cat_color = "Commodity", "#f59e0b"
+
+                        st.markdown(f"""
+                        <div style="display:flex; align-items:center; padding:14px 20px; background:#fff; border-radius:12px; margin-bottom:8px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                            <div style="flex:1;">
+                                <div style="font-size:1.05em; font-weight:700; color:#1e293b;">{asset}</div>
+                                <span style="font-size:0.7em; background:{cat_color}; color:#fff; padding:2px 8px; border-radius:20px;">{cat}</span>
+                                <span style="font-size:0.8em; color:#94a3b8; margin-left:8px;">{w_pct:.0f}% allocation</span>
+                            </div>
+                            <div style="text-align:right; min-width:120px;">
+                                <div style="font-size:1.5em; font-weight:900; color:{a_color};">{score}</div>
+                                <div style="font-size:0.75em; color:#94a3b8;">contributes {int(contribution)} pts</div>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    # Radar chart for portfolio
+                    st.markdown("<div style='font-size:1.1em; font-weight:700; color:#333; margin:30px 0 10px; border-left:3px solid #2E7BE6; padding-left:8px;'>Portfolio Radar</div>", unsafe_allow_html=True)
+
+                    fig_pf = go.Figure()
+                    colors = ['#2E7BE6', '#F4A261', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4', '#f59e0b', '#ec4899']
+                    for i, asset in enumerate(sorted_assets):
+                        axes_data = pf_axes.get(asset, {})
+                        labels = list(axes_data.keys())
+                        values = list(axes_data.values())
+                        values_closed = values + [values[0]] if values else []
+                        labels_closed = labels + [labels[0]] if labels else []
+                        fig_pf.add_trace(go.Scatterpolar(
+                            r=values_closed,
+                            theta=labels_closed,
+                            name=asset,
+                            line=dict(color=colors[i % len(colors)], width=2),
+                            fill='toself',
+                            fillcolor=f"rgba({int(colors[i % len(colors)][1:3], 16)},{int(colors[i % len(colors)][3:5], 16)},{int(colors[i % len(colors)][5:7], 16)},0.05)"
+                        ))
+
+                    fig_pf.update_layout(
+                        polar=dict(
+                            radialaxis=dict(range=[0, 200], showticklabels=True, tickfont=dict(size=9)),
+                        ),
+                        showlegend=True,
+                        height=450,
+                        margin=dict(l=40, r=40, t=30, b=30),
+                    )
+                    st.plotly_chart(fig_pf, use_container_width=True, config={"displayModeBar": False})
+
+                    # Weakest axis analysis
+                    st.markdown("<div style='font-size:1.1em; font-weight:700; color:#333; margin:20px 0 10px; border-left:3px solid #ef4444; padding-left:8px;'>Improvement Opportunities</div>", unsafe_allow_html=True)
+
+                    # Find the weakest scoring assets
+                    weakest = sorted(pf_scores.keys(), key=lambda a: pf_scores[a]["total"])
+                    for asset in weakest[:2]:
+                        score = int(pf_scores[asset]["total"])
+                        if score < 600:
+                            st.markdown(f"""
+                            <div style="padding:12px 16px; background:#fef2f2; border-radius:8px; margin-bottom:8px; border-left:4px solid #ef4444;">
+                                <span style="font-weight:700; color:#991b1b;">{asset}</span>
+                                <span style="color:#64748b;"> — Score {score}/1000. This asset is pulling your portfolio score down. Consider reviewing or replacing it.</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        elif score < 700:
+                            st.markdown(f"""
+                            <div style="padding:12px 16px; background:#fffbeb; border-radius:8px; margin-bottom:8px; border-left:4px solid #f59e0b;">
+                                <span style="font-weight:700; color:#92400e;">{asset}</span>
+                                <span style="color:#64748b;"> — Score {score}/1000. Moderate performance. Monitor for changes.</span>
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                    # All strong
+                    if all(pf_scores[a]["total"] >= 700 for a in pf_scores):
+                        st.markdown("""
+                        <div style="padding:12px 16px; background:#f0fdf4; border-radius:8px; margin-bottom:8px; border-left:4px solid #10b981;">
+                            <span style="font-weight:700; color:#166534;">All assets are performing well.</span>
+                            <span style="color:#64748b;"> Your portfolio is well-balanced with strong scores across the board.</span>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                    render_pricing_section()
+
+        else:
+            st.info("Select at least one asset to begin portfolio analysis.")
 
 
 # --- Authentication ---
