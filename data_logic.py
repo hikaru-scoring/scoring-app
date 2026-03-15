@@ -222,7 +222,7 @@ def _fetch_ecb_data():
     m2    = _ecb_sdmx_series("BSI",  "M.U2.Y.V.M20.X.I.U2.2300.Z01.E",     25)
 
     if any(s is None or s.empty for s in [y10, y2, cpi, unemp]):
-        st.error("ECB Data Error: SDMX fetch failed")
+        # ECB SDMX API temporarily unavailable
         return None
 
     latest_y10          = float(y10.iloc[-1])
@@ -286,7 +286,7 @@ def _fetch_boj_data():
         pass
 
     if y10 is None or y10.empty or y2 is None or y2.empty:
-        st.error("BoJ Data Error: FRED yield fetch failed")
+        # BoJ FRED data temporarily unavailable
         return None
 
     latest_y10          = float(y10.iloc[-1])
@@ -340,7 +340,7 @@ def _fetch_mas_data():
     latest_unemployment = _worldbank_fetch("SL.UEM.TOTL.ZS")
 
     if cpi_yoy is None or latest_unemployment is None:
-        st.error("MAS Data Error: World Bank fetch failed")
+        # MAS World Bank data temporarily unavailable
         return None
 
     # --- FRED: 10年債・短期金利（取れなければNone） ---
@@ -394,7 +394,7 @@ def _fetch_mas_data():
             "y10_hist":     y10,
         }
     except Exception as e:
-        st.error(f"MAS Data Error: {e}")
+        # MAS data error (silent)
         return None
 
 
@@ -493,7 +493,7 @@ def fetch_central_bank_data(bank):
         }
 
     except Exception as e:
-        st.error(f"Central Bank Data Error: {e}")
+        # Central bank data error (silent)
         return None        
 @st.cache_data(ttl=3600)
 def fetch_news(ticker_symbol, max_items=5):
