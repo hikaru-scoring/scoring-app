@@ -239,7 +239,7 @@ def main():
         company_name = st.text_input("Company name for PDF", value="", placeholder="e.g. ABC Capital Pte Ltd", key="wl_company")
 
     # --- タブ ---
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["SGX", "Central Banks", "Commodities", "Rankings", "Portfolio"])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["SGX", "Central Banks", "Commodities", "Rankings", "Portfolio", "Backtest"])
 
     # --- SGX TAB ---
     with tab1:
@@ -1357,10 +1357,267 @@ natural gas, agricultural products, and more with real-time data.
                         </div>
                         """, unsafe_allow_html=True)
 
+                    # --- What-if Simulator ---
+                    st.markdown("<div style='font-size:1.1em; font-weight:700; color:#333; margin:30px 0 10px; border-left:3px solid #06b6d4; padding-left:8px;'>What-if Simulator</div>", unsafe_allow_html=True)
+                    st.markdown("<p style='color:#64748b; font-size:0.9em;'>Swap an asset to see how your portfolio score changes.</p>", unsafe_allow_html=True)
+
+                    wi_col1, wi_col2 = st.columns(2)
+                    with wi_col1:
+                        swap_out = st.selectbox("Remove", list(pf_scores.keys()), key="wi_out")
+                    with wi_col2:
+                        available_swaps = [a for a in all_assets if a not in pf_scores or a == swap_out]
+                        swap_in = st.selectbox("Replace with", [a for a in available_swaps if a != swap_out], key="wi_in")
+
+                    if swap_out and swap_in:
+                        # Fetch swap_in score
+                        swap_data = None
+                        if swap_in in sgx_names:
+                            sym = next(s["symbol"] for s in all_sgx if s["name"] == swap_in)
+                            swap_data = fetch_data(sym, swap_in)
+                        elif swap_in in all_cb:
+                            swap_data = fetch_central_bank_data(swap_in)
+                        elif swap_in in all_comm:
+                            swap_data = fetch_commodity_data(swap_in)
+
+                        if swap_data and not swap_data.get("_loading"):
+                            # Calculate new portfolio score
+                            new_scores = {k: v for k, v in pf_scores.items() if k != swap_out}
+                            new_scores[swap_in] = swap_data
+                            new_weights = {k: v for k, v in weights.items() if k != swap_out}
+                            new_weights[swap_in] = weights.get(swap_out, 0)
+                            new_alloc = sum(new_weights[a] for a in new_scores if a in new_weights)
+                            if new_alloc > 0:
+                                new_total = sum(new_scores[a]["total"] * (new_weights[a] / new_alloc) for a in new_scores if a in new_weights)
+                            else:
+                                new_total = 0
+
+                            delta = new_total - weighted_total
+                            if delta > 0:
+                                delta_color, delta_icon = "#10b981", "&#9650;"
+                            elif delta < 0:
+                                delta_color, delta_icon = "#ef4444", "&#9660;"
+                            else:
+                                delta_color, delta_icon = "#94a3b8", "&#9644;"
+
+                            st.markdown(f"""
+                            <div style="display:flex; align-items:center; gap:20px; padding:20px; background:#f0f9ff; border-radius:12px; margin-top:10px; border:1px solid #bae6fd;">
+                                <div style="flex:1;">
+                                    <div style="font-size:0.85em; color:#64748b;">Swap <strong>{swap_out}</strong> ({int(pf_scores[swap_out]['total'])}) → <strong>{swap_in}</strong> ({int(swap_data['total'])})</div>
+                                    <div style="font-size:0.85em; color:#64748b; margin-top:4px;">New portfolio score:</div>
+                                </div>
+                                <div style="text-align:right;">
+                                    <div style="font-size:2.5em; font-weight:900; color:#1e3a8a;">{int(new_total)}</div>
+                                    <div style="font-size:1.1em; font-weight:700; color:{delta_color};">{delta_icon} {delta:+.0f}</div>
+                                </div>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.warning(f"Could not load data for {swap_in}.")
+
                     render_pricing_section()
 
         else:
             st.info("Select at least one asset to begin portfolio analysis.")
+
+    # --- Backtest TAB ---
+    with tab6:
+        st.markdown(
+            "<div style='font-size:1.5em; font-weight:900; color:#1e3a8a; margin-bottom:5px;'>FRS-1000 Backtest</div>",
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            "<p style='color:#64748b; margin-bottom:20px;'>What if you invested based on FRS-1000 scores? This backtest compares a score-based strategy against equal-weight buying.</p>",
+            unsafe_allow_html=True
+        )
+
+        bt_stocks = [
+            {"name": "DBS Group", "symbol": "D05"},
+            {"name": "Singtel", "symbol": "Z74"},
+            {"name": "OCBC Bank", "symbol": "O39"},
+            {"name": "Keppel Ltd", "symbol": "BN4"},
+            {"name": "CapitaLand Investment", "symbol": "9CI"},
+        ]
+
+        # Fetch all price histories and score histories
+        bt_price_data = {}
+        bt_score_data = {}
+        bt_errors = []
+        for s in bt_stocks:
+            d = fetch_data(s["symbol"], s["name"])
+            if d and not d.get("_loading") and d.get("price_hist") is not None:
+                bt_price_data[s["name"]] = d["price_hist"]
+                hist_scores = compute_hist_scores_sgx(d["price_hist"])
+                if hist_scores is not None and len(hist_scores) > 0:
+                    bt_score_data[s["name"]] = hist_scores
+            else:
+                bt_errors.append(s["name"])
+
+        if bt_errors:
+            st.warning(f"Could not load data for: {', '.join(bt_errors)}")
+
+        if len(bt_score_data) >= 2:
+            # Find common date range
+            all_dates = None
+            for name, scores in bt_score_data.items():
+                if all_dates is None:
+                    all_dates = set(scores.index)
+                else:
+                    all_dates = all_dates.intersection(scores.index)
+
+            if all_dates and len(all_dates) >= 12:
+                sorted_dates = sorted(all_dates)
+
+                # Strategy: at each rebalance date, overweight top scorers
+                # Equal weight: 1/N allocation to each stock
+                # Score-weighted: allocate proportionally to score
+
+                equal_returns = []
+                score_returns = []
+                strategy_dates = []
+
+                for i in range(1, len(sorted_dates)):
+                    prev_date = sorted_dates[i - 1]
+                    curr_date = sorted_dates[i]
+
+                    # Get scores at prev_date (decision point)
+                    scores_at_prev = {}
+                    for name in bt_score_data:
+                        scores_at_prev[name] = bt_score_data[name].get(prev_date, 500)
+
+                    total_score = sum(scores_at_prev.values())
+
+                    # Get returns for each stock in this period
+                    period_returns = {}
+                    for name in bt_price_data:
+                        ph = bt_price_data[name]
+                        # Find nearest dates in price history
+                        prev_prices = ph[ph.index <= prev_date]
+                        curr_prices = ph[ph.index <= curr_date]
+                        if len(prev_prices) > 0 and len(curr_prices) > 0:
+                            p0 = float(prev_prices.iloc[-1])
+                            p1 = float(curr_prices.iloc[-1])
+                            if p0 > 0:
+                                period_returns[name] = (p1 / p0) - 1
+
+                    if not period_returns:
+                        continue
+
+                    # Equal weight return
+                    eq_ret = sum(period_returns.values()) / len(period_returns)
+
+                    # Score-weighted return
+                    if total_score > 0:
+                        sc_ret = sum(
+                            period_returns.get(name, 0) * (scores_at_prev.get(name, 0) / total_score)
+                            for name in period_returns
+                        )
+                    else:
+                        sc_ret = eq_ret
+
+                    equal_returns.append(eq_ret)
+                    score_returns.append(sc_ret)
+                    strategy_dates.append(curr_date)
+
+                # Calculate cumulative returns
+                eq_cumulative = [100]
+                sc_cumulative = [100]
+                for eq_r, sc_r in zip(equal_returns, score_returns):
+                    eq_cumulative.append(eq_cumulative[-1] * (1 + eq_r))
+                    sc_cumulative.append(sc_cumulative[-1] * (1 + sc_r))
+
+                plot_dates = [sorted_dates[0]] + strategy_dates
+
+                # Summary stats
+                eq_total_return = (eq_cumulative[-1] / 100 - 1) * 100
+                sc_total_return = (sc_cumulative[-1] / 100 - 1) * 100
+                outperformance = sc_total_return - eq_total_return
+
+                if outperformance > 0:
+                    perf_color = "#10b981"
+                    perf_label = "outperformed"
+                elif outperformance < 0:
+                    perf_color = "#ef4444"
+                    perf_label = "underperformed"
+                else:
+                    perf_color = "#94a3b8"
+                    perf_label = "matched"
+
+                # Display metrics
+                m1, m2, m3 = st.columns(3)
+                m1.markdown(f"""
+                <div style="background:#fff; padding:20px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;">
+                    <div style="font-size:0.75em; color:#94a3b8; font-weight:700;">EQUAL WEIGHT</div>
+                    <div style="font-size:2em; font-weight:900; color:#94a3b8;">{eq_total_return:+.1f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+                m2.markdown(f"""
+                <div style="background:#fff; padding:20px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;">
+                    <div style="font-size:0.75em; color:#94a3b8; font-weight:700;">FRS-1000 STRATEGY</div>
+                    <div style="font-size:2em; font-weight:900; color:#2E7BE6;">{sc_total_return:+.1f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+                m3.markdown(f"""
+                <div style="background:#fff; padding:20px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;">
+                    <div style="font-size:0.75em; color:#94a3b8; font-weight:700;">ALPHA</div>
+                    <div style="font-size:2em; font-weight:900; color:{perf_color};">{outperformance:+.1f}%</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown(f"""
+                <div style="text-align:center; padding:10px; margin:15px 0;">
+                    <span style="color:#64748b;">FRS-1000 score-weighted strategy </span>
+                    <span style="color:{perf_color}; font-weight:700;">{perf_label} equal-weight by {abs(outperformance):.1f}%</span>
+                    <span style="color:#64748b;"> over {len(strategy_dates)} months.</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Chart
+                fig_bt = go.Figure()
+                fig_bt.add_trace(go.Scatter(
+                    x=plot_dates, y=sc_cumulative,
+                    mode='lines', name='FRS-1000 Strategy',
+                    line=dict(color='#2E7BE6', width=3),
+                    fill='tozeroy', fillcolor='rgba(46,123,230,0.05)'
+                ))
+                fig_bt.add_trace(go.Scatter(
+                    x=plot_dates, y=eq_cumulative,
+                    mode='lines', name='Equal Weight',
+                    line=dict(color='#94a3b8', width=2, dash='dash')
+                ))
+                fig_bt.update_layout(
+                    yaxis_title="Portfolio Value ($100 start)",
+                    height=400,
+                    margin=dict(l=0, r=0, t=20, b=0),
+                    plot_bgcolor='white',
+                    hovermode="x unified",
+                    clickmode='none',
+                    dragmode=False,
+                    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+                )
+                st.plotly_chart(fig_bt, use_container_width=True, config={"displayModeBar": False})
+
+                st.markdown("""
+                <div style="font-size:0.75em; color:#94a3b8; margin-top:10px; padding:10px; background:#f8fafc; border-radius:8px;">
+                <strong>Methodology:</strong> Monthly rebalancing. Score-weighted strategy allocates more capital to higher-scoring stocks.
+                Equal-weight distributes capital evenly across all stocks. Starting value: $100. Past performance does not guarantee future results.
+                </div>
+                """, unsafe_allow_html=True)
+
+                with st.expander("Monthly allocation breakdown"):
+                    for i, date in enumerate(sorted_dates[:-1]):
+                        scores_at = {name: bt_score_data[name].get(date, 0) for name in bt_score_data}
+                        total_sc = sum(scores_at.values())
+                        if total_sc > 0:
+                            alloc = {name: scores_at[name] / total_sc * 100 for name in scores_at}
+                            alloc_str = " | ".join(f"{name}: {pct:.0f}%" for name, pct in sorted(alloc.items(), key=lambda x: -x[1]))
+                            st.caption(f"**{date.strftime('%Y-%m')}** — {alloc_str}")
+
+                render_pricing_section()
+
+            else:
+                st.warning("Not enough overlapping data to run backtest (need at least 12 months).")
+        else:
+            st.info("Loading stock data for backtest... please wait a moment and refresh.")
 
 
 # --- Authentication ---
