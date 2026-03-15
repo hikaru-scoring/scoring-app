@@ -54,7 +54,7 @@ def render_pricing_section():
 &#10003; Score History & Rankings<br>
 &#10003; Daily Score Alerts<br>
 &#10003; White-label PDF<br>
-&#10003; API Access<br>
+&#10007; API Access<br>
 &#10007; Custom Scoring Model
 </div>
 </div>
