@@ -557,6 +557,57 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             else:
                 st.caption("No recent news available.")
 
+            with st.expander("How does the scoring work?"):
+                st.markdown("### FRS-1000 Scoring Framework")
+                st.markdown("Each central bank is scored across **5 axes**, each worth up to **200 points** (max total: **1,000 points**).")
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    st.markdown("""
+**How to read the score**
+- **800–1000** — Strong macro fundamentals
+- **600–799** — Stable, with some areas to watch
+- **400–599** — Mixed signals, warrants deeper analysis
+- **Below 400** — Significant macro weaknesses
+
+**How to use the comparison**
+Press **Save** on any central bank, then switch to another.
+The radar chart and score cards will show both side-by-side,
+making it easy to compare macro environments across economies.
+""")
+                with col_m2:
+                    st.markdown("""
+**Data sources & update frequency**
+- Federal Reserve & Bank of England: FRED (refreshed every 24 hours)
+- European Central Bank: ECB SDMX API (refreshed every 24 hours)
+- Bank of Japan: FRED + World Bank (refreshed every 24 hours)
+- MAS: World Bank + FRED (refreshed every 24 hours)
+
+**Premium Plan**
+The current version covers 5 major central banks for demonstration.
+Subscribers get access to **20+ central banks** with real-time,
+institutional-grade data and full historical scoring.
+""")
+                st.caption("This tool is for informational and screening purposes only. It does not constitute investment advice.")
+
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.markdown("""
+<div style="text-align: center; padding: 60px 40px; background: #FFFFFF; border-radius: 24px; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+<div style="margin-bottom: 20px;"><span style="font-size: 3.5em; font-weight: 900; color: #2E7BE6; letter-spacing: -2px;">SCORING</span></div>
+<p style="font-size: 1.1em; color: #64748b; margin-bottom: 35px;">Exclusive Early Access for the First Visionaries.</p>
+<div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px;">
+<div style="text-align: center;">
+<div style="font-size: 0.8em; color: #94a3b8; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Registration Status</div>
+<div style="font-size: 1.3em; font-weight: 800; color: #10b981;">OPEN</div>
+</div></div>
+<div style="background: #f8fafc; padding: 35px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #f1f5f9;">
+<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$500 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
+</div>
+<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">Secure Your Slot Now</div>
+<div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
+<strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. All investment decisions should be made at the user's own discretion and risk.
+</div></div>
+""", unsafe_allow_html=True)
+
         else:
             st.warning("Central bank data could not be loaded.")
 
@@ -690,6 +741,54 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                     )
             else:
                 st.caption("No recent news available.")
+
+            with st.expander("How does the scoring work?"):
+                st.markdown("### FRS-1000 Scoring Framework")
+                st.markdown("Each commodity is scored across **5 axes**, each worth up to **200 points** (max total: **1,000 points**).")
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    st.markdown("""
+**How to read the score**
+- **800–1000** — Strong momentum and stable supply
+- **600–799** — Solid, with some areas to watch
+- **400–599** — Mixed signals, warrants deeper analysis
+- **Below 400** — Significant weakness or high volatility
+
+**How to use the comparison**
+Press **Save** on any commodity, then switch to another.
+The radar chart and score cards will show both side-by-side,
+making it easy to compare commodities across multiple dimensions.
+""")
+                with col_m2:
+                    st.markdown("""
+**Data sources & update frequency**
+- Commodity futures data: Yahoo Finance (refreshed every hour)
+
+**Premium Plan**
+The current version covers 3 commodities for demonstration.
+Subscribers get access to **20+ commodities** including silver,
+natural gas, agricultural products, and more with real-time data.
+""")
+                st.caption("This tool is for informational and screening purposes only. It does not constitute investment advice.")
+
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.markdown("""
+<div style="text-align: center; padding: 60px 40px; background: #FFFFFF; border-radius: 24px; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+<div style="margin-bottom: 20px;"><span style="font-size: 3.5em; font-weight: 900; color: #2E7BE6; letter-spacing: -2px;">SCORING</span></div>
+<p style="font-size: 1.1em; color: #64748b; margin-bottom: 35px;">Exclusive Early Access for the First Visionaries.</p>
+<div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px;">
+<div style="text-align: center;">
+<div style="font-size: 0.8em; color: #94a3b8; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Registration Status</div>
+<div style="font-size: 1.3em; font-weight: 800; color: #10b981;">OPEN</div>
+</div></div>
+<div style="background: #f8fafc; padding: 35px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #f1f5f9;">
+<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$500 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
+</div>
+<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">Secure Your Slot Now</div>
+<div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
+<strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. All investment decisions should be made at the user's own discretion and risk.
+</div></div>
+""", unsafe_allow_html=True)
 
         else:
             st.warning("Commodity data could not be loaded.")
