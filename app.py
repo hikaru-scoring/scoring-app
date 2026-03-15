@@ -36,6 +36,7 @@ def render_pricing_section():
 <span style="color:#10b981;">&#10003;</span> PDF & CSV Export<br>
 <span style="color:#10b981;">&#10003;</span> Score History & Rankings<br>
 <span style="color:#10b981;">&#10003;</span> Daily Score Alerts<br>
+<span style="color:#10b981;">&#10003;</span> Portfolio Analysis<br>
 <span style="color:#ef4444;">&#10007;</span> White-label PDF<br>
 <span style="color:#ef4444;">&#10007;</span> API Access<br>
 <span style="color:#ef4444;">&#10007;</span> Custom Scoring Model
@@ -55,6 +56,7 @@ def render_pricing_section():
 <span style="color:#10b981;">&#10003;</span> PDF & CSV Export<br>
 <span style="color:#10b981;">&#10003;</span> Score History & Rankings<br>
 <span style="color:#10b981;">&#10003;</span> Daily Score Alerts<br>
+<span style="color:#10b981;">&#10003;</span> Portfolio Analysis<br>
 <span style="color:#10b981;">&#10003;</span> White-label PDF<br>
 <span style="color:#ef4444;">&#10007;</span> API Access<br>
 <span style="color:#ef4444;">&#10007;</span> Custom Scoring Model
@@ -73,6 +75,7 @@ def render_pricing_section():
 <span style="color:#10b981;">&#10003;</span> PDF & CSV Export<br>
 <span style="color:#10b981;">&#10003;</span> Score History & Rankings<br>
 <span style="color:#10b981;">&#10003;</span> Daily Score Alerts<br>
+<span style="color:#10b981;">&#10003;</span> Portfolio Analysis<br>
 <span style="color:#10b981;">&#10003;</span> White-label PDF<br>
 <span style="color:#10b981;">&#10003;</span> API Access<br>
 <span style="color:#10b981;">&#10003;</span> Custom Scoring Model
