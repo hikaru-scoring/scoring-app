@@ -559,6 +559,31 @@ def compute_hist_scores_commodity(price_hist):
     return pd.Series(scores)
 
 
+def compute_hist_scores_cb(y10_hist):
+    """中央銀行スコアを10年債利回り履歴から月次で疑似計算する"""
+    import pandas as pd
+    if y10_hist is None or len(y10_hist) < 20:
+        return None
+    monthly = y10_hist.resample('ME').last().dropna()
+    if len(monthly) < 12:
+        return None
+    scores = {}
+    for i in range(12, len(monthly)):
+        w = monthly.iloc[:i+1]
+        latest = float(w.iloc[-1])
+        vol = float(w.tail(12).std()) if len(w) >= 12 else float(w.std())
+        # Price Stability proxy: distance from 3% (neutral) target
+        ps = max(0, min(200, 200 - abs(latest - 3.0) * 30))
+        # Market Stability: inverse volatility
+        ms = max(0, min(200, 200 - vol * 100))
+        # Monetary Policy proxy: trend direction (positive = improving)
+        change_12m = latest - float(w.iloc[-12])
+        mp = max(0, min(200, 100 + change_12m * 20))
+        # Employment + Liquidity: neutral (100 each)
+        scores[w.index[-1]] = int(ps + ms + mp + 100 + 100)
+    return pd.Series(scores)
+
+
 def compute_hist_scores_sgx(price_hist):
     """過去のSGX銘柄スコアを価格データから月次で疑似計算する（価格ベース3軸 + 中立100×2）"""
     import pandas as pd

@@ -3,9 +3,60 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
-from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data, fetch_news, compute_hist_scores_commodity, compute_hist_scores_sgx
+from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data, fetch_news, compute_hist_scores_commodity, compute_hist_scores_sgx, compute_hist_scores_cb
+from pdf_report import generate_pdf
+import json
+import os
 
 APP_TITLE = "FRS-1000 — SGX Dashboard"
+
+SCORES_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "scores_history.json")
+
+def _load_scores_history():
+    """scores_history.json を読み込んで返す"""
+    if os.path.exists(SCORES_HISTORY_FILE):
+        with open(SCORES_HISTORY_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def render_daily_score_tracker(asset_name: str):
+    """scores_history.json からデイリースコア推移チャートを表示する"""
+    history = _load_scores_history()
+    if not history:
+        st.caption("No daily score records yet.")
+        return
+
+    dates = sorted(history.keys())
+    values = []
+    valid_dates = []
+    for d in dates:
+        score = history[d].get(asset_name)
+        if score is not None:
+            valid_dates.append(d)
+            values.append(score)
+
+    if len(valid_dates) < 2:
+        st.caption(f"Not enough daily records for {asset_name} yet (need at least 2 days).")
+        return
+
+    fig_daily = go.Figure()
+    fig_daily.add_trace(go.Scatter(
+        x=valid_dates, y=values, mode='lines+markers',
+        name=asset_name,
+        line=dict(color='#2E7BE6', width=2),
+        marker=dict(size=5),
+        fill='tozeroy', fillcolor='rgba(46,123,230,0.05)'
+    ))
+    fig_daily.update_layout(
+        yaxis=dict(range=[0, 1000], title="Score"),
+        height=250,
+        margin=dict(l=0, r=0, t=10, b=0),
+        plot_bgcolor='white',
+        hovermode="x unified",
+        clickmode='none',
+        dragmode=False,
+    )
+    st.plotly_chart(fig_daily, use_container_width=True, config={"displayModeBar": False})
 
 # 冒頭 9行目付近
 AXES = [
@@ -85,13 +136,22 @@ def main():
             if data.get("_loading"):
                 st.warning("Stock data is currently unavailable (Yahoo Finance rate limit). Scores will load automatically — please check back later.")
 
-            col_btn1, col_btn2, col_btn_rest = st.columns([1, 1, 8])
+            col_btn1, col_btn2, col_btn3, col_btn_rest = st.columns([1, 1, 1.5, 6.5])
 
             with col_btn1:
                 save_it = st.button("Save")
 
             with col_btn2:
                 clear_it = st.button("Clear")
+
+            with col_btn3:
+                sgx_snapshot = {
+                    "Price": f"{data.get('current_price', 0):.2f}",
+                    "P/E Ratio": f"{data.get('pe', 'N/A')}",
+                    "Market Cap": f"{data.get('market_cap', 0)/1e9:.1f}B" if data.get('market_cap') else "N/A",
+                }
+                sgx_pdf = generate_pdf(data, AXES, "SGX", logic_descriptions, sgx_snapshot)
+                st.download_button("PDF Report", sgx_pdf, file_name=f"FRS1000_{name.replace(' ', '_')}.pdf", mime="application/pdf")
 
             # 3. ボタンごとの動作設定
             if save_it:
@@ -247,6 +307,10 @@ def main():
                 st.plotly_chart(fig_hs, use_container_width=True, config={"displayModeBar": False})
             else:
                 st.caption("Score history unavailable — insufficient price data.")
+
+            # V-C. Daily Score Tracker
+            st.markdown("<div class='section-title'>V-C. Daily Score Tracker</div>", unsafe_allow_html=True)
+            render_daily_score_tracker(name)
 
             # 4. Snapshot（比較対応版）
             st.markdown("<div class='section-title'>VI. Snapshot Comparison</div>", unsafe_allow_html=True)
@@ -421,11 +485,21 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
         if bank_data:
 
-            cb_btn1, cb_btn2, _ = st.columns([1, 1, 8])
+            cb_btn1, cb_btn2, cb_btn3, _ = st.columns([1, 1, 1.5, 6.5])
             with cb_btn1:
                 cb_save = st.button("Save", key="cb_save")
             with cb_btn2:
                 cb_clear = st.button("Clear", key="cb_clear")
+            with cb_btn3:
+                cb_snapshot = {
+                    "10Y Yield": f"{bank_data['y10']:.2f}%" if bank_data.get('y10') is not None else "N/A",
+                    "CPI YoY": f"{bank_data['cpi_yoy']:.2f}%",
+                    "Unemployment": f"{bank_data['unemployment']:.2f}%",
+                    "M2 YoY": f"{bank_data['m2_yoy']:.2f}%" if bank_data.get('m2_yoy') is not None else "N/A",
+                    "Yield Curve": f"{bank_data['curve']:.2f}%" if bank_data.get('curve') is not None else "N/A",
+                }
+                cb_pdf = generate_pdf(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot)
+                st.download_button("PDF Report", cb_pdf, file_name=f"FRS1000_{bank.replace(' ', '_')}.pdf", mime="application/pdf", key="cb_pdf")
 
             if cb_save:
                 st.session_state.saved_cb_data = bank_data
@@ -549,6 +623,25 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             else:
                 st.info("10Y Yield data is not available for MAS via FRED.")
 
+            # --- 4-B. Score History ---
+            st.markdown("<div class='section-title'>IV-B. Score History</div>", unsafe_allow_html=True)
+            hist_cb = compute_hist_scores_cb(bank_data.get('y10_hist'))
+            if hist_cb is not None and len(hist_cb) > 0:
+                fig_hcb = go.Figure()
+                fig_hcb.add_trace(go.Scatter(x=hist_cb.index, y=hist_cb.values, mode='lines', name=bank, line=dict(color='#2E7BE6', width=2), fill='tozeroy', fillcolor='rgba(46,123,230,0.05)'))
+                if saved_cb and saved_cb.get('y10_hist') is not None:
+                    saved_hcb = compute_hist_scores_cb(saved_cb['y10_hist'])
+                    if saved_hcb is not None:
+                        fig_hcb.add_trace(go.Scatter(x=saved_hcb.index, y=saved_hcb.values, mode='lines', name=saved_cb['name'], line=dict(color='#F4A261', width=2)))
+                fig_hcb.update_layout(yaxis=dict(range=[0,1000], title="Score"), height=280, margin=dict(l=0,r=0,t=10,b=0), plot_bgcolor='white', hovermode="x unified", clickmode='none', dragmode=False)
+                st.plotly_chart(fig_hcb, use_container_width=True, config={"displayModeBar": False})
+            else:
+                st.caption("Score history unavailable — insufficient yield data.")
+
+            # --- 4-C. Daily Score Tracker ---
+            st.markdown("<div class='section-title'>IV-C. Daily Score Tracker</div>", unsafe_allow_html=True)
+            render_daily_score_tracker(bank)
+
             # --- 5. News ---
             st.markdown("<div class='section-title'>V. Latest News</div>", unsafe_allow_html=True)
             cb_ticker_map = {
@@ -650,7 +743,7 @@ institutional-grade data and full historical scoring.
 
         if comm_data:
 
-            cm_btn1, cm_btn2, _ = st.columns([1, 1, 8])
+            cm_btn1, cm_btn2, cm_btn3, _ = st.columns([1, 1, 1.5, 6.5])
             with cm_btn1:
                 if st.button("Save", key="comm_save"):
                     st.session_state.saved_comm_data = comm_data
@@ -659,6 +752,15 @@ institutional-grade data and full historical scoring.
                 if st.button("Clear", key="comm_clear"):
                     st.session_state.saved_comm_data = None
                     st.rerun()
+            with cm_btn3:
+                comm_snapshot = {
+                    "Price": f"${comm_data['current_price']:.2f}",
+                    "52W High": f"${comm_data['high_52w']:.2f}",
+                    "YoY Change": f"{comm_data['yoy_change']:.2f}%",
+                    "20D Volatility": f"{comm_data['vol_20d']:.2f}%",
+                }
+                comm_pdf = generate_pdf(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot)
+                st.download_button("PDF Report", comm_pdf, file_name=f"FRS1000_{asset.replace(' ', '_')}.pdf", mime="application/pdf", key="comm_pdf")
 
             # --- 1. Total Score ---
             st.markdown(f"""
@@ -754,6 +856,10 @@ institutional-grade data and full historical scoring.
                 st.plotly_chart(fig_hc, use_container_width=True, config={"displayModeBar": False})
             else:
                 st.caption("Score history unavailable — insufficient price data.")
+
+            # IV-C. Daily Score Tracker
+            st.markdown("<div class='section-title'>IV-C. Daily Score Tracker</div>", unsafe_allow_html=True)
+            render_daily_score_tracker(asset)
 
             # --- 5. News ---
             st.markdown("<div class='section-title'>V. Latest News</div>", unsafe_allow_html=True)
