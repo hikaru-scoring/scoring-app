@@ -63,7 +63,8 @@ def _kv_row(pdf: FRSReport, label: str, value: str):
 
 def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
                  logic_descriptions: dict | None = None,
-                 snapshot: dict | None = None) -> bytes:
+                 snapshot: dict | None = None,
+                 company_name: str = "") -> bytes:
     """Return PDF bytes for the given asset data.
 
     Args:
@@ -72,10 +73,18 @@ def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
         tab_name: "SGX" | "Central Banks" | "Commodities"
         logic_descriptions: optional dict mapping axis -> description string.
         snapshot: optional dict of label->formatted-value for the snapshot section.
+        company_name: optional company name for white-label branding.
     """
     pdf = FRSReport(orientation="P", unit="mm", format="A4")
     pdf.set_auto_page_break(auto=True, margin=20)
     pdf.add_page()
+
+    # --- White-label company name ---
+    if company_name:
+        pdf.set_font("Helvetica", "B", 11)
+        pdf.set_text_color(*pdf.GRAY)
+        pdf.cell(0, 7, _safe(f"Prepared for: {company_name}"), new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
 
     # --- Asset name ---
     pdf.set_font("Helvetica", "B", 16)

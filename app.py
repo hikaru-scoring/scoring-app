@@ -2,6 +2,7 @@
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+import streamlit_authenticator as stauth
 from ui_components import inject_css, render_radar_chart
 from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data, fetch_news, compute_hist_scores_commodity, compute_hist_scores_sgx, compute_hist_scores_cb
 from pdf_report import generate_pdf
@@ -118,8 +119,6 @@ def main():
     <style>
     .block-container { padding-top: 1rem !important; }
     header[data-testid="stHeader"] { display: none !important; }
-    section[data-testid="stSidebar"] { display: none !important; }
-    button[data-testid="collapsedControl"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -129,6 +128,11 @@ def main():
         st.session_state.saved_cb_data = None
     if "saved_comm_data" not in st.session_state:
         st.session_state.saved_comm_data = None
+
+    # White-label: PDF に社名を入れる
+    with st.sidebar:
+        st.markdown("**PDF White Label**")
+        company_name = st.text_input("Company name for PDF", value="", placeholder="e.g. ABC Capital Pte Ltd", key="wl_company")
 
     # --- タブ ---
     tab1, tab2, tab3, tab4 = st.tabs(["SGX", "Central Banks", "Commodities", "Rankings"])
@@ -203,7 +207,7 @@ def main():
                 clear_it = st.button("Clear")
 
             with col_btn3:
-                sgx_pdf = generate_pdf(data, AXES, "SGX", logic_descriptions, sgx_snapshot)
+                sgx_pdf = generate_pdf(data, AXES, "SGX", logic_descriptions, sgx_snapshot, company_name)
                 st.download_button("PDF", sgx_pdf, file_name=f"FRS1000_{name.replace(' ', '_')}.pdf", mime="application/pdf")
 
             with col_btn4:
@@ -549,7 +553,7 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
             with cb_btn2:
                 cb_clear = st.button("Clear", key="cb_clear")
             with cb_btn3:
-                cb_pdf = generate_pdf(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot)
+                cb_pdf = generate_pdf(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot, company_name)
                 st.download_button("PDF", cb_pdf, file_name=f"FRS1000_{bank.replace(' ', '_')}.pdf", mime="application/pdf", key="cb_pdf")
             with cb_btn4:
                 cb_xlsx = generate_excel(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot)
@@ -816,7 +820,7 @@ institutional-grade data and full historical scoring.
                     st.session_state.saved_comm_data = None
                     st.rerun()
             with cm_btn3:
-                comm_pdf = generate_pdf(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot)
+                comm_pdf = generate_pdf(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot, company_name)
                 st.download_button("PDF", comm_pdf, file_name=f"FRS1000_{asset.replace(' ', '_')}.pdf", mime="application/pdf", key="comm_pdf")
             with cm_btn4:
                 comm_xlsx = generate_excel(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot)
@@ -1097,6 +1101,53 @@ natural gas, agricultural products, and more with real-time data.
             st.info("Loading scores... please wait a moment and refresh.")
 
 
-# 💡 ここからは if data: ブロックの外側。一番左に配置
+# --- Authentication ---
+def _build_credentials():
+    """Streamlit secrets からユーザー情報を構築する"""
+    users = st.secrets.get("auth_users", {})
+    creds = {"usernames": {}}
+    for username, info in users.items():
+        creds["usernames"][username] = {
+            "email": info.get("email", ""),
+            "first_name": info.get("first_name", ""),
+            "last_name": info.get("last_name", ""),
+            "password": info.get("password", ""),
+            "logged_in": False,
+            "failed_login_attempts": 0,
+            "roles": ["viewer"],
+        }
+    return creds
+
 if __name__ == "__main__":
-    main()
+    credentials = _build_credentials()
+
+    if not credentials["usernames"]:
+        # auth_users が未設定ならログインなしで動かす（開発用）
+        main()
+    else:
+        authenticator = stauth.Authenticate(
+            credentials,
+            st.secrets["auth_cookie"]["name"],
+            st.secrets["auth_cookie"]["key"],
+            st.secrets["auth_cookie"]["expiry_days"],
+        )
+
+        try:
+            authenticator.login()
+        except Exception as e:
+            st.error(e)
+
+        if st.session_state.get("authentication_status"):
+            with st.sidebar:
+                st.markdown(f"**{st.session_state.get('name', '')}**")
+                authenticator.logout("Logout")
+            main()
+        elif st.session_state.get("authentication_status") is False:
+            st.error("Username or password is incorrect.")
+        else:
+            st.markdown("""
+            <div style="text-align:center; margin-top:80px;">
+                <div style="font-size:3em; font-weight:900; color:#2E7BE6; letter-spacing:-2px;">FRS-1000</div>
+                <p style="color:#64748b; margin-top:10px;">Please log in to access the scoring dashboard.</p>
+            </div>
+            """, unsafe_allow_html=True)
