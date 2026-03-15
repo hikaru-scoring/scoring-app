@@ -136,6 +136,15 @@ def main():
             if data.get("_loading"):
                 st.warning("Stock data is currently unavailable (Yahoo Finance rate limit). Scores will load automatically — please check back later.")
 
+            # ロジック解説（PDF生成とスコアカード両方で使用）
+            logic_descriptions = {
+                "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
+                "Market Position": "Market Volatility × Market Capitalization",
+                "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
+                "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
+                "People": "Long-term Growth × Dividend Yield"
+            }
+
             col_btn1, col_btn2, col_btn3, col_btn_rest = st.columns([1, 1, 1.5, 6.5])
 
             with col_btn1:
@@ -204,15 +213,6 @@ def main():
                 # 表示ソースの確定
                 source = st.session_state.saved_data if st.session_state.saved_data else data
                 is_oil = source.get('name') == "WTI CRUDE OIL"
-
-                # 🚀 会社用のロジック解説（Peopleに復刻）
-                logic_descriptions = {
-                    "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
-                    "Market Position": "Market Volatility × Market Capitalization",
-                    "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
-                    "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
-                    "People": "Long-term Growth × Dividend Yield"
-                }
 
                 oil_labels = [
                     "Demand Forecast",

@@ -1,5 +1,6 @@
 # pdf_report.py
 """Generate a branded FRS-1000 PDF report for any asset tab."""
+from __future__ import annotations
 import io
 from datetime import datetime
 from fpdf import FPDF
