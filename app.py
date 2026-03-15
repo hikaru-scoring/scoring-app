@@ -206,11 +206,20 @@ def main():
     .block-container { padding-top: 1rem !important; }
     header[data-testid="stHeader"] { display: none !important; }
     footer { display: none !important; }
-    .viewerBadge_container__r5tak { display: none !important; }
-    [data-testid="stActionButtonIcon"] { display: none !important; }
-    a[href*="github.com"] img { display: none !important; }
-    .styles_viewerBadge__CvC9N { display: none !important; }
     #MainMenu { display: none !important; }
+    .viewerBadge_container__r5tak { display: none !important; }
+    .styles_viewerBadge__CvC9N { display: none !important; }
+    [data-testid="stActionButtonIcon"] { display: none !important; }
+    [data-testid="manage-app-button"] { display: none !important; }
+    a[href*="github.com"] img { display: none !important; }
+    div[class*="viewerBadge"] { display: none !important; }
+    div[class*="StatusWidget"] { display: none !important; }
+    div[data-testid="stStatusWidget"] { display: none !important; }
+    iframe[title="streamlit_lottie.streamlit_lottie"] { display: none !important; }
+    .stDeployButton { display: none !important; }
+    div[class*="stToolbar"] { display: none !important; }
+    div.embeddedAppMetaInfoBar_container__DxxL1 { display: none !important; }
+    div[class*="embeddedAppMetaInfoBar"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
