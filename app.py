@@ -11,6 +11,89 @@ import os
 
 APP_TITLE = "FRS-1000 — Scoring Platform"
 
+def render_pricing_section():
+    """全タブ共通の料金プラン比較表"""
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("""
+<div style="text-align:center; padding:50px 20px; background:#FFFFFF; border-radius:24px; border:1px solid #e2e8f0; box-shadow:0 10px 25px rgba(0,0,0,0.05); margin-top:40px; font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+
+<div style="margin-bottom:10px;">
+<span style="font-size:3em; font-weight:900; color:#2E7BE6; letter-spacing:-2px;">FRS-1000</span>
+</div>
+<p style="font-size:1.05em; color:#64748b; margin-bottom:40px;">Choose the plan that fits your needs.</p>
+
+<div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
+
+<!-- Starter -->
+<div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:30px 25px; width:260px; text-align:center;">
+<div style="font-size:0.75em; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">Starter</div>
+<div style="font-size:2.5em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$500<span style="font-size:0.35em; color:#64748b;"> /mo</span></div>
+<div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0;">
+&#10003; SGX Top 30 Stocks<br>
+&#10003; 5 Central Banks<br>
+&#10003; 3 Commodities<br>
+&#10003; PDF & CSV Export<br>
+&#10003; Score History & Rankings<br>
+&#10003; Daily Score Alerts<br>
+&#10007; White-label PDF<br>
+&#10007; API Access<br>
+&#10007; Custom Scoring Model
+</div>
+</div>
+
+<!-- Professional -->
+<div style="background:#fff; border:3px solid #2E7BE6; border-radius:16px; padding:30px 25px; width:260px; text-align:center; position:relative;">
+<div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#2E7BE6; color:#fff; font-size:0.7em; font-weight:700; padding:3px 16px; border-radius:20px; letter-spacing:1px;">POPULAR</div>
+<div style="font-size:0.75em; font-weight:700; color:#2E7BE6; letter-spacing:1px; text-transform:uppercase;">Professional</div>
+<div style="font-size:2.5em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$1,500<span style="font-size:0.35em; color:#64748b;"> /mo</span></div>
+<div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0;">
+&#10003; All SGX-Listed Stocks<br>
+&#10003; 20+ Central Banks<br>
+&#10003; 10+ Commodities<br>
+&#10003; PDF & CSV Export<br>
+&#10003; Score History & Rankings<br>
+&#10003; Daily Score Alerts<br>
+&#10003; White-label PDF<br>
+&#10003; API Access<br>
+&#10007; Custom Scoring Model
+</div>
+</div>
+
+<!-- Enterprise -->
+<div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:30px 25px; width:260px; text-align:center;">
+<div style="font-size:0.75em; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">Enterprise</div>
+<div style="font-size:2.5em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$5,000<span style="font-size:0.35em; color:#64748b;"> /mo</span></div>
+<div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0;">
+&#10003; All SGX-Listed Stocks<br>
+&#10003; 20+ Central Banks<br>
+&#10003; 20+ Commodities<br>
+&#10003; PDF & CSV Export<br>
+&#10003; Score History & Rankings<br>
+&#10003; Daily Score Alerts<br>
+&#10003; White-label PDF<br>
+&#10003; API Access<br>
+&#10003; Custom Scoring Model
+</div>
+</div>
+
+</div>
+
+<div style="margin-bottom:30px;">
+<div style="font-size:0.8em; color:#94a3b8; font-weight:700; letter-spacing:1px; text-transform:uppercase;">Founding Member Slots</div>
+<div style="font-size:1.3em; font-weight:800; color:#10b981;">5 Remaining</div>
+</div>
+
+<div style="background:#1e3a8a; color:#FFFFFF; padding:16px 50px; font-size:1.2em; font-weight:900; border-radius:50px; display:inline-block; cursor:pointer; box-shadow:0 10px 20px rgba(30,58,138,0.2); text-transform:uppercase; letter-spacing:1px;">
+Get Started
+</div>
+
+<div style="margin-top:20px; padding:16px; background:#f8fafc; border-radius:10px; font-size:0.7em; color:#64748b; line-height:1.6; text-align:left; border-left:4px solid #2E7BE6; max-width:600px; margin-left:auto; margin-right:auto;">
+<strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. All investment decisions should be made at the user's own discretion and risk.
+</div>
+
+</div>
+""", unsafe_allow_html=True)
+
 SCORES_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "scores_history.json")
 
 def _load_scores_history():
@@ -463,42 +546,7 @@ institutional-grade data and full historical scoring.
 
                 st.caption("This tool is for informational and screening purposes only. It does not constitute investment advice. All investment decisions are made at the user's own risk.")
 
-            # --- VIII. PRE-ORDER SECTION (Branded White Edition) ---
-            st.markdown("<br><br>", unsafe_allow_html=True)
-
-            st.markdown(
-"""
-<div style="text-align: center; padding: 60px 40px; background: #FFFFFF; border-radius: 24px; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-<div style="margin-bottom: 20px;">
-<span style="font-size: 3.5em; font-weight: 900; color: #2E7BE6; letter-spacing: -2px;">SCORING</span>
-</div>
-<p style="font-size: 1.1em; color: #64748b; margin-bottom: 35px;">Exclusive Early Access for the First Visionaries.</p>
-<div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px;">
-<div style="text-align: center;">
-<div style="font-size: 0.8em; color: #94a3b8; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Registration Status</div>
-<div style="font-size: 1.3em; font-weight: 800; color: #10b981;">OPEN</div>
-</div>
-</div>
-
-<div style="background: #f8fafc; padding: 35px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #f1f5f9;">
-<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$500 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
-</div>
-
-<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">
-Secure Your Slot Now
-</div>
-
-<div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
-<strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. While we strive for accuracy, we do not guarantee the completeness or reliability of the data provided. All investment decisions should be made at the user's own discretion and risk. We shall not be held liable for any loss or damage arising from the use of this service.
-</div>
-
-<div style="margin-top: 30px; font-size: 0.85em; color: #94a3b8; font-weight: 500;">
-Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
-</div>
-</div>
-""",
-                unsafe_allow_html=True
-            )
+            render_pricing_section()
 
     # --- Central Banks TAB ---
     CB_AXES = [
@@ -757,24 +805,7 @@ institutional-grade data and full historical scoring.
 """)
                 st.caption("This tool is for informational and screening purposes only. It does not constitute investment advice.")
 
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            st.markdown("""
-<div style="text-align: center; padding: 60px 40px; background: #FFFFFF; border-radius: 24px; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-<div style="margin-bottom: 20px;"><span style="font-size: 3.5em; font-weight: 900; color: #2E7BE6; letter-spacing: -2px;">SCORING</span></div>
-<p style="font-size: 1.1em; color: #64748b; margin-bottom: 35px;">Exclusive Early Access for the First Visionaries.</p>
-<div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px;">
-<div style="text-align: center;">
-<div style="font-size: 0.8em; color: #94a3b8; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Registration Status</div>
-<div style="font-size: 1.3em; font-weight: 800; color: #10b981;">OPEN</div>
-</div></div>
-<div style="background: #f8fafc; padding: 35px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #f1f5f9;">
-<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$500 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
-</div>
-<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">Secure Your Slot Now</div>
-<div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
-<strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. All investment decisions should be made at the user's own discretion and risk.
-</div></div>
-""", unsafe_allow_html=True)
+            render_pricing_section()
 
         else:
             st.warning("Central bank data could not be loaded.")
@@ -973,24 +1004,7 @@ natural gas, agricultural products, and more with real-time data.
 """)
                 st.caption("This tool is for informational and screening purposes only. It does not constitute investment advice.")
 
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            st.markdown("""
-<div style="text-align: center; padding: 60px 40px; background: #FFFFFF; border-radius: 24px; color: #1e293b; border: 1px solid #e2e8f0; box-shadow: 0 10px 25px rgba(0,0,0,0.05); margin-top: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-<div style="margin-bottom: 20px;"><span style="font-size: 3.5em; font-weight: 900; color: #2E7BE6; letter-spacing: -2px;">SCORING</span></div>
-<p style="font-size: 1.1em; color: #64748b; margin-bottom: 35px;">Exclusive Early Access for the First Visionaries.</p>
-<div style="display: flex; justify-content: center; gap: 40px; margin-bottom: 40px;">
-<div style="text-align: center;">
-<div style="font-size: 0.8em; color: #94a3b8; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;">Registration Status</div>
-<div style="font-size: 1.3em; font-weight: 800; color: #10b981;">OPEN</div>
-</div></div>
-<div style="background: #f8fafc; padding: 35px; border-radius: 16px; margin-bottom: 40px; border: 1px solid #f1f5f9;">
-<div style="font-size: 4.2em; font-weight: 900; color: #1e3a8a; line-height: 1;">S$500 <span style="font-size: 0.35em; font-weight: 600; color: #64748b; vertical-align: middle;">/ MONTH</span></div>
-</div>
-<div style="background: #1e3a8a; color: #FFFFFF; padding: 18px 60px; font-size: 1.4em; font-weight: 900; border-radius: 50px; display: inline-block; cursor: pointer; box-shadow: 0 10px 20px rgba(30, 58, 138, 0.2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">Secure Your Slot Now</div>
-<div style="margin-top: 10px; padding: 20px; background: #f8fafc; border-radius: 12px; font-size: 0.75em; color: #64748b; line-height: 1.6; text-align: left; border-left: 5px solid #2E7BE6; max-width: 600px; margin-left: auto; margin-right: auto;">
-<strong>DISCLAIMER:</strong> This service is for informational purposes only and does not constitute investment advice, recommendation, or solicitation. All investment decisions should be made at the user's own discretion and risk.
-</div></div>
-""", unsafe_allow_html=True)
+            render_pricing_section()
 
         else:
             st.warning("Commodity data could not be loaded.")
