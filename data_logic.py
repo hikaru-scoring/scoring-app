@@ -4,7 +4,7 @@ import yfinance as yf
 import streamlit as st
 from fredapi import Fred
 
-@st.cache_data(ttl=86400, persist="disk")
+@st.cache_data(ttl=3600)
 def fetch_data(symbol, name):
     """
     株価データと分析スコアを取得する関数。
