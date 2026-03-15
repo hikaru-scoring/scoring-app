@@ -29,16 +29,16 @@ def render_pricing_section():
 <div style="font-size:0.75em; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">Starter</div>
 <div style="font-size:2em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$500<span style="font-size:0.4em; color:#64748b;"> /mo</span></div>
 <div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0; flex:1;">
-&#10003; 1 User Account<br>
-&#10003; SGX Top 30 Stocks<br>
-&#10003; 5 Central Banks<br>
-&#10003; 3 Commodities<br>
-&#10003; PDF & CSV Export<br>
-&#10003; Score History & Rankings<br>
-&#10003; Daily Score Alerts<br>
-&#10007; White-label PDF<br>
-&#10007; API Access<br>
-&#10007; Custom Scoring Model
+<span style="color:#10b981;">&#10003;</span> 1 User Account<br>
+<span style="color:#10b981;">&#10003;</span> SGX Top 30 Stocks<br>
+<span style="color:#10b981;">&#10003;</span> 5 Central Banks<br>
+<span style="color:#10b981;">&#10003;</span> 3 Commodities<br>
+<span style="color:#10b981;">&#10003;</span> PDF & CSV Export<br>
+<span style="color:#10b981;">&#10003;</span> Score History & Rankings<br>
+<span style="color:#10b981;">&#10003;</span> Daily Score Alerts<br>
+<span style="color:#ef4444;">&#10007;</span> White-label PDF<br>
+<span style="color:#ef4444;">&#10007;</span> API Access<br>
+<span style="color:#ef4444;">&#10007;</span> Custom Scoring Model
 </div>
 </div>
 
@@ -48,16 +48,16 @@ def render_pricing_section():
 <div style="font-size:0.75em; font-weight:700; color:#2E7BE6; letter-spacing:1px; text-transform:uppercase;">Professional</div>
 <div style="font-size:2em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$1,500<span style="font-size:0.4em; color:#64748b;"> /mo</span></div>
 <div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0; flex:1;">
-&#10003; Up to 5 Users<br>
-&#10003; All SGX-Listed Stocks<br>
-&#10003; 20+ Central Banks<br>
-&#10003; 10+ Commodities<br>
-&#10003; PDF & CSV Export<br>
-&#10003; Score History & Rankings<br>
-&#10003; Daily Score Alerts<br>
-&#10003; White-label PDF<br>
-&#10007; API Access<br>
-&#10007; Custom Scoring Model
+<span style="color:#10b981;">&#10003;</span> Up to 5 Users<br>
+<span style="color:#10b981;">&#10003;</span> All SGX-Listed Stocks<br>
+<span style="color:#10b981;">&#10003;</span> 20+ Central Banks<br>
+<span style="color:#10b981;">&#10003;</span> 10+ Commodities<br>
+<span style="color:#10b981;">&#10003;</span> PDF & CSV Export<br>
+<span style="color:#10b981;">&#10003;</span> Score History & Rankings<br>
+<span style="color:#10b981;">&#10003;</span> Daily Score Alerts<br>
+<span style="color:#10b981;">&#10003;</span> White-label PDF<br>
+<span style="color:#ef4444;">&#10007;</span> API Access<br>
+<span style="color:#ef4444;">&#10007;</span> Custom Scoring Model
 </div>
 </div>
 
@@ -66,16 +66,16 @@ def render_pricing_section():
 <div style="font-size:0.75em; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">Enterprise</div>
 <div style="font-size:2em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$5,000<span style="font-size:0.4em; color:#64748b;"> /mo</span></div>
 <div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0; flex:1;">
-&#10003; Unlimited Users<br>
-&#10003; All SGX-Listed Stocks<br>
-&#10003; 20+ Central Banks<br>
-&#10003; 20+ Commodities<br>
-&#10003; PDF & CSV Export<br>
-&#10003; Score History & Rankings<br>
-&#10003; Daily Score Alerts<br>
-&#10003; White-label PDF<br>
-&#10003; API Access<br>
-&#10003; Custom Scoring Model
+<span style="color:#10b981;">&#10003;</span> Unlimited Users<br>
+<span style="color:#10b981;">&#10003;</span> All SGX-Listed Stocks<br>
+<span style="color:#10b981;">&#10003;</span> 20+ Central Banks<br>
+<span style="color:#10b981;">&#10003;</span> 20+ Commodities<br>
+<span style="color:#10b981;">&#10003;</span> PDF & CSV Export<br>
+<span style="color:#10b981;">&#10003;</span> Score History & Rankings<br>
+<span style="color:#10b981;">&#10003;</span> Daily Score Alerts<br>
+<span style="color:#10b981;">&#10003;</span> White-label PDF<br>
+<span style="color:#10b981;">&#10003;</span> API Access<br>
+<span style="color:#10b981;">&#10003;</span> Custom Scoring Model
 </div>
 </div>
 
