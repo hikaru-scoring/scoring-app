@@ -27,7 +27,7 @@ def render_pricing_section():
 <!-- Starter -->
 <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:30px 25px; width:260px; text-align:center; display:flex; flex-direction:column;">
 <div style="font-size:0.75em; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">Starter</div>
-<div style="font-size:2.5em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$500<span style="font-size:0.35em; color:#64748b;"> /mo</span></div>
+<div style="font-size:2em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$500<span style="font-size:0.4em; color:#64748b;"> /mo</span></div>
 <div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0; flex:1;">
 &#10003; 1 User Account<br>
 &#10003; SGX Top 30 Stocks<br>
@@ -46,7 +46,7 @@ def render_pricing_section():
 <div style="background:#fff; border:3px solid #2E7BE6; border-radius:16px; padding:30px 25px; width:260px; text-align:center; position:relative; display:flex; flex-direction:column;">
 <div style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#2E7BE6; color:#fff; font-size:0.7em; font-weight:700; padding:3px 16px; border-radius:20px; letter-spacing:1px;">POPULAR</div>
 <div style="font-size:0.75em; font-weight:700; color:#2E7BE6; letter-spacing:1px; text-transform:uppercase;">Professional</div>
-<div style="font-size:2.5em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$1,500<span style="font-size:0.35em; color:#64748b;"> /mo</span></div>
+<div style="font-size:2em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$1,500<span style="font-size:0.4em; color:#64748b;"> /mo</span></div>
 <div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0; flex:1;">
 &#10003; Up to 5 Users<br>
 &#10003; All SGX-Listed Stocks<br>
@@ -64,7 +64,7 @@ def render_pricing_section():
 <!-- Enterprise -->
 <div style="background:#f8fafc; border:2px solid #e2e8f0; border-radius:16px; padding:30px 25px; width:260px; text-align:center; display:flex; flex-direction:column;">
 <div style="font-size:0.75em; font-weight:700; color:#94a3b8; letter-spacing:1px; text-transform:uppercase;">Enterprise</div>
-<div style="font-size:2.5em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$5,000<span style="font-size:0.35em; color:#64748b;"> /mo</span></div>
+<div style="font-size:2em; font-weight:900; color:#1e3a8a; margin:10px 0;">S$5,000<span style="font-size:0.4em; color:#64748b;"> /mo</span></div>
 <div style="font-size:0.8em; color:#64748b; line-height:2; text-align:left; padding:15px 10px; border-top:1px solid #e2e8f0; flex:1;">
 &#10003; Unlimited Users<br>
 &#10003; All SGX-Listed Stocks<br>
