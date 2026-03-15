@@ -9,7 +9,7 @@ from pdf_report import generate_pdf
 import json
 import os
 
-APP_TITLE = "FRS-1000 — SGX Dashboard"
+APP_TITLE = "FRS-1000 — Scoring Platform"
 
 SCORES_HISTORY_FILE = os.path.join(os.path.dirname(__file__), "scores_history.json")
 
