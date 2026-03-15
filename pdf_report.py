@@ -66,7 +66,7 @@ def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
     # --- Asset name ---
     pdf.set_font("Helvetica", "B", 16)
     pdf.set_text_color(*pdf.DARK)
-    pdf.cell(0, 10, f"{data['name']}  —  {tab_name}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 10, f"{data['name']}  -  {tab_name}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(2)
 
     # --- Total Score ---
@@ -86,12 +86,12 @@ def generate_pdf(data: dict, axes_labels: list[str], tab_name: str,
     elif total >= 600:
         grade, comment = "B", "Solid, with some areas to watch"
     elif total >= 400:
-        grade, comment = "C", "Mixed signals — warrants deeper analysis"
+        grade, comment = "C", "Mixed signals - warrants deeper analysis"
     else:
         grade, comment = "D", "Significant weaknesses in multiple areas"
     pdf.set_font("Helvetica", "B", 11)
     pdf.set_text_color(*pdf.DARK)
-    pdf.cell(0, 7, f"Grade: {grade}  —  {comment}", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 7, f"Grade: {grade}  -  {comment}", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(6)
 
     # --- Axis Scores table ---
