@@ -1422,9 +1422,9 @@ natural gas, agricultural products, and more with real-time data.
                         if st.button("Generate AI Report", key="ai_report_btn"):
                             with st.spinner("Generating report..."):
                                 try:
-                                    from google import genai
-                                    client = genai.Client(api_key=gemini_key)
-                                    model_name = "gemini-2.5-flash-preview-05-20"
+                                    import google.generativeai as genai
+                                    genai.configure(api_key=gemini_key)
+                                    model = genai.GenerativeModel('gemini-pro')
 
                                     # Build context for AI
                                     asset_summary = []
@@ -1456,7 +1456,7 @@ Rules:
 - Write in English
 - Keep it under 200 words"""
 
-                                    response = client.models.generate_content(model=model_name, contents=prompt)
+                                    response = model.generate_content(prompt)
                                     report_text = response.text
 
                                     st.markdown(f"""
