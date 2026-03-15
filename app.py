@@ -1164,21 +1164,30 @@ natural gas, agricultural products, and more with real-time data.
             st.markdown("**Set allocation weights (%)**")
             weights = {}
             weight_cols = st.columns(min(len(selected), 4))
+            default_val = round(100 / len(selected))
+            # Ensure defaults don't exceed 100 total
             for i, asset in enumerate(selected):
                 col = weight_cols[i % len(weight_cols)]
-                weights[asset] = col.number_input(asset, min_value=0, max_value=100, value=round(100 / len(selected)), key=f"pf_w_{asset}")
+                if i == len(selected) - 1:
+                    # Last asset gets the remainder
+                    used = sum(weights.values())
+                    last_default = max(0, min(100 - used, 100))
+                    weights[asset] = col.number_input(asset, min_value=0, max_value=100, value=last_default, key=f"pf_w_{asset}")
+                else:
+                    weights[asset] = col.number_input(asset, min_value=0, max_value=100, value=default_val, key=f"pf_w_{asset}")
 
             total_weight = sum(weights.values())
 
             if total_weight == 0:
                 st.warning("Please assign weights to at least one asset.")
+            elif total_weight > 100:
+                st.error(f"Weights total {total_weight}% — exceeds 100%. Please reduce allocations.")
             else:
-                # Normalize weights
-                norm_weights = {k: v / total_weight for k, v in weights.items()}
+                # Use actual percentages (no normalization needed)
+                norm_weights = {k: v / 100 for k, v in weights.items()}
 
-                # Show weight bar
-                if total_weight != 100:
-                    st.info(f"Weights total {total_weight}%. They will be normalized automatically.")
+                if total_weight < 100:
+                    st.info(f"Weights total {total_weight}%. Remaining {100 - total_weight}% is unallocated (cash).")
 
                 # Fetch scores
                 pf_scores = {}
@@ -1213,8 +1222,12 @@ natural gas, agricultural products, and more with real-time data.
                     st.warning(f"Could not load data for: {', '.join(errors)}")
 
                 if pf_scores:
-                    # Calculate weighted portfolio score
-                    weighted_total = sum(pf_scores[a]["total"] * norm_weights[a] for a in pf_scores if a in norm_weights)
+                    # Calculate weighted portfolio score (weighted average of allocated assets)
+                    alloc_sum = sum(weights[a] for a in pf_scores if a in weights)
+                    if alloc_sum > 0:
+                        weighted_total = sum(pf_scores[a]["total"] * (weights[a] / alloc_sum) for a in pf_scores if a in weights)
+                    else:
+                        weighted_total = 0
 
                     # Score color
                     if weighted_total >= 800:
