@@ -47,23 +47,23 @@ def fetch_data(symbol, name):
         # --- 🚀 鉄壁プロトタイプ・ロジック（欠損カバー版） ---
         valid_scores = {}
 
-        # 1. Future Focus
+        # 1. Entry Edge
         per = info.get('forwardPE') or info.get('trailingPE')
         if per:
             per_factor = max(0.5, 1.5 - (per / 40))
-            valid_scores["Future Focus"] = min(int((last_price / avg_price) * 100 * per_factor), 200)
+            valid_scores["Entry Edge"] = min(int((last_price / avg_price) * 100 * per_factor), 200)
 
-        # 2. Market Position
+        # 2. Stability Profile
         m_cap = info.get('marketCap')
         if m_cap:
             cap_factor = (m_cap / 1e11) + 0.5
-            valid_scores["Market Position"] = min(int((100 + (volatility * 10)) * cap_factor), 200)
+            valid_scores["Stability Profile"] = min(int((100 + (volatility * 10)) * cap_factor), 200)
 
-        # 3. Financial Strength
+        # 3. Durability
         debt = info.get('debtToEquity')
         if debt:
             debt_factor = max(0.5, 1.5 - (debt / 200))
-            valid_scores["Financial Strength"] = min(int((last_price / max_price) * 150 * debt_factor), 200)
+            valid_scores["Durability"] = min(int((last_price / max_price) * 150 * debt_factor), 200)
 
         # --- 4. Cashflow Quality (FCF Margin ベース) ---
         fcf = info.get('freeCashflow', 0) or 0
@@ -85,10 +85,10 @@ def fetch_data(symbol, name):
 
         # 【経営の質重視】比率を 0.7 : 0.3 に設定
         people_raw = (roe_score * 0.7) + (eps_score * 0.3)
-        valid_scores["People"] = int(min(people_raw, 200))
+        valid_scores["Shareholder Return"] = int(min(people_raw, 200))
 
         # --- 🚀 200点張り付きを解消し、銘柄の「差」を出す代入ロジック ---
-        AXES_LIST = ["Future Focus", "Market Position", "Financial Strength", "Cashflow Quality", "People"]
+        AXES_LIST = ["Entry Edge", "Stability Profile", "Durability", "Cashflow Quality", "Shareholder Return"]
         company_axes = {}
         
         for k in AXES_LIST:
@@ -597,8 +597,8 @@ def compute_hist_scores_sgx(price_hist):
         avg_12m  = float(w.tail(12).mean())
         high_52w = float(w.tail(12).max())
         vol      = float(w.pct_change().tail(12).std() * 100)
-        ff = min(max((last / avg_12m) * 100,  0), 200)   # Future Focus
-        fs = min(max((last / high_52w) * 200, 0), 200)   # Financial Strength
-        mp = min(max(200 - vol * 20,          0), 200)   # Market Position
+        ff = min(max((last / avg_12m) * 100,  0), 200)   # Entry Edge
+        fs = min(max((last / high_52w) * 200, 0), 200)   # Durability
+        mp = min(max(200 - vol * 20,          0), 200)   # Stability Profile
         scores[w.index[-1]] = int(ff + fs + mp + 100 + 100)
     return pd.Series(scores)

@@ -37,15 +37,15 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("""
-**Future Focus** *(max 200)*
+**Entry Edge** *(max 200)*
 Momentum score combining price-to-moving-average ratio with P/E valuation.
 *Higher score = strong momentum + reasonable valuation*
 
-**Market Position** *(max 200)*
+**Stability Profile** *(max 200)*
 Derived from market capitalisation and price volatility.
 *Higher score = large, stable market presence*
 
-**Financial Strength** *(max 200)*
+**Durability** *(max 200)*
 Price resilience relative to 52-week high, adjusted by debt-to-equity ratio.
 *Higher score = strong balance sheet, price near highs*
 """)
@@ -56,7 +56,7 @@ with col2:
 Return on Equity (ROE) — a proxy for capital efficiency.
 *Higher score = effective use of shareholder equity*
 
-**People** *(max 200)*
+**Shareholder Return** *(max 200)*
 Long-term price growth combined with dividend yield.
 *Higher score = sustained growth + shareholder returns*
 """)

@@ -104,11 +104,11 @@ def render_daily_score_tracker(asset_name: str):
 
 # 冒頭 9行目付近
 AXES = [
-    "Future Focus",
-    "Market Position",
-    "Financial Strength",
+    "Entry Edge",
+    "Stability Profile",
+    "Durability",
     "Cashflow Quality",
-    "People"
+    "Shareholder Return"
 ]
 
 st.set_page_config(page_title=APP_TITLE, layout="wide")
@@ -174,7 +174,7 @@ def main():
         options = [f"{s['name']} ({s['symbol']})" for s in top_5]
 
         if data is None:
-            DUMMY_AXES = {"Future Focus": 100, "Market Position": 100, "Financial Strength": 100, "Cashflow Quality": 100, "People": 100}
+            DUMMY_AXES = {"Entry Edge": 100, "Stability Profile": 100, "Durability": 100, "Cashflow Quality": 100, "Shareholder Return": 100}
             data = {"axes": DUMMY_AXES, "total": 500, "name": name, "price_hist": None, "current_price": 0, "pe": "N/A", "market_cap": 0}
             data["_loading"] = True
 
@@ -185,11 +185,11 @@ def main():
 
             # ロジック解説（PDF生成とスコアカード両方で使用）
             logic_descriptions = {
-                "Future Focus": "Momentum (Price vs Avg) × Valuation (PER)",
-                "Market Position": "Market Volatility × Market Capitalization",
-                "Financial Strength": "Price Resilience × Debt-to-Equity Ratio",
-                "Cashflow Quality": "Return on Equity (ROE): Capital Efficiency",
-                "People": "Long-term Growth × Dividend Yield"
+                "Entry Edge": "Momentum (Price vs Avg) x Valuation (PER)",
+                "Stability Profile": "Market Volatility x Market Capitalization",
+                "Durability": "Price Resilience x Debt-to-Equity Ratio",
+                "Cashflow Quality": "Capital Efficiency (ROE)",
+                "Shareholder Return": "Long-term Growth x Dividend Yield"
             }
 
             sgx_snapshot = {
