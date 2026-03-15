@@ -1318,8 +1318,10 @@ natural gas, agricultural products, and more with real-time data.
                         showlegend=True,
                         height=450,
                         margin=dict(l=40, r=40, t=30, b=30),
+                        clickmode='none',
+                        dragmode=False,
                     )
-                    st.plotly_chart(fig_pf, use_container_width=True, config={"displayModeBar": False})
+                    st.plotly_chart(fig_pf, use_container_width=True, config={"displayModeBar": False, "staticPlot": True})
 
                     # Weakest axis analysis
                     st.markdown("<div style='font-size:1.1em; font-weight:700; color:#333; margin:20px 0 10px; border-left:3px solid #ef4444; padding-left:8px;'>Improvement Opportunities</div>", unsafe_allow_html=True)
