@@ -7,3 +7,4 @@ requests
 fredapi
 fpdf2
 streamlit-authenticator
+google-generativeai

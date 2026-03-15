@@ -1414,6 +1414,60 @@ natural gas, agricultural products, and more with real-time data.
                         else:
                             st.warning(f"Could not load data for {swap_in}.")
 
+                    # --- AI Report Generation ---
+                    gemini_key = st.secrets.get("gemini_api_key", "")
+                    if gemini_key:
+                        st.markdown("<div style='font-size:1.1em; font-weight:700; color:#333; margin:30px 0 10px; border-left:3px solid #8b5cf6; padding-left:8px;'>AI Portfolio Report</div>", unsafe_allow_html=True)
+
+                        if st.button("Generate AI Report", key="ai_report_btn"):
+                            with st.spinner("Generating report..."):
+                                try:
+                                    import google.generativeai as genai
+                                    genai.configure(api_key=gemini_key)
+                                    model = genai.GenerativeModel('gemini-2.0-flash')
+
+                                    # Build context for AI
+                                    asset_summary = []
+                                    for asset in sorted_assets:
+                                        d = pf_scores[asset]
+                                        cat = "SGX Stock" if asset in sgx_names else ("Central Bank" if asset in all_cb else "Commodity")
+                                        axes_str = ", ".join(f"{k}: {int(v)}/200" for k, v in pf_axes.get(asset, {}).items())
+                                        asset_summary.append(f"- {asset} ({cat}): Total {int(d['total'])}/1000, Allocation {weights.get(asset, 0)}%. Axes: {axes_str}")
+
+                                    prompt = f"""You are a financial analysis assistant for the FRS-1000 scoring platform.
+Analyze this portfolio and provide a concise, professional report in 3-4 paragraphs.
+
+Portfolio Score: {int(weighted_total)}/1000
+
+Assets:
+{chr(10).join(asset_summary)}
+
+Cover these points:
+1. Overall portfolio health assessment
+2. Sector/asset class concentration risks
+3. Weakest areas and specific improvement suggestions
+4. One actionable recommendation
+
+Rules:
+- Be specific, reference actual scores and asset names
+- Keep it professional but accessible
+- Do NOT give buy/sell recommendations
+- End with a disclaimer that this is for informational purposes only
+- Write in English
+- Keep it under 200 words"""
+
+                                    response = model.generate_content(prompt)
+                                    report_text = response.text
+
+                                    st.markdown(f"""
+                                    <div style="padding:20px; background:#faf5ff; border-radius:12px; border:1px solid #e9d5ff; margin-top:10px;">
+                                        <div style="font-size:0.75em; color:#8b5cf6; font-weight:700; margin-bottom:10px; letter-spacing:1px;">AI-GENERATED ANALYSIS</div>
+                                        <div style="font-size:0.9em; color:#374151; line-height:1.7;">{report_text}</div>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                                except Exception as e:
+                                    st.error(f"AI report generation failed: {str(e)}")
+
                     render_pricing_section()
 
         else:
