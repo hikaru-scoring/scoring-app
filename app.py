@@ -19,6 +19,54 @@ def _load_scores_history():
             return json.load(f)
     return {}
 
+def render_score_delta(asset_name: str, current_total: int):
+    """前日比のスコア変動を表示する"""
+    history = _load_scores_history()
+    if not history:
+        return
+    dates = sorted(history.keys(), reverse=True)
+    prev_score = None
+    for d in dates:
+        s = history[d].get(asset_name)
+        if s is not None:
+            prev_score = s
+            break
+    if prev_score is None:
+        return
+    delta = current_total - prev_score
+    if delta > 0:
+        color, arrow = "#10b981", "&#9650;"  # green up
+    elif delta < 0:
+        color, arrow = "#ef4444", "&#9660;"  # red down
+    else:
+        color, arrow = "#94a3b8", "&#9644;"  # gray flat
+    st.markdown(
+        f'<div style="text-align:center; font-size:1.1em; font-weight:700; color:{color}; margin-top:-8px; margin-bottom:10px;">'
+        f'{arrow} {delta:+d} from last record ({prev_score})'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
+def generate_excel(data: dict, axes_labels: list, tab_name: str,
+                   logic_descriptions: dict = None, snapshot: dict = None) -> bytes:
+    """スコアデータをExcelバイトとして返す"""
+    import io as _io
+    rows = []
+    for k in axes_labels:
+        desc = logic_descriptions.get(k, "") if logic_descriptions else ""
+        rows.append({"Axis": k, "Score": int(data["axes"].get(k, 0)), "Description": desc})
+    rows.append({"Axis": "TOTAL", "Score": int(data.get("total", 0)), "Description": ""})
+    df = pd.DataFrame(rows)
+    if snapshot:
+        snap_rows = [{"Metric": label, "Value": value} for label, value in snapshot.items()]
+        df_snap = pd.DataFrame(snap_rows)
+    buf = _io.BytesIO()
+    with pd.ExcelWriter(buf, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Scores", index=False)
+        if snapshot:
+            df_snap.to_excel(writer, sheet_name="Snapshot", index=False)
+    return buf.getvalue()
+
 def render_daily_score_tracker(asset_name: str):
     """scores_history.json からデイリースコア推移チャートを表示する"""
     history = _load_scores_history()
@@ -88,7 +136,7 @@ def main():
         st.session_state.saved_comm_data = None
 
     # --- タブ ---
-    tab1, tab2, tab3 = st.tabs(["SGX", "Central Banks", "Commodities"])
+    tab1, tab2, tab3, tab4 = st.tabs(["SGX", "Central Banks", "Commodities", "Rankings"])
 
     # --- SGX TAB ---
     with tab1:
@@ -145,7 +193,13 @@ def main():
                 "People": "Long-term Growth × Dividend Yield"
             }
 
-            col_btn1, col_btn2, col_btn3, col_btn_rest = st.columns([1, 1, 1.5, 6.5])
+            sgx_snapshot = {
+                "Price": f"{data.get('current_price', 0):.2f}",
+                "P/E Ratio": f"{data.get('pe', 'N/A')}",
+                "Market Cap": f"{data.get('market_cap', 0)/1e9:.1f}B" if data.get('market_cap') else "N/A",
+            }
+
+            col_btn1, col_btn2, col_btn3, col_btn4, col_btn_rest = st.columns([1, 1, 1.5, 1.5, 5.5])
 
             with col_btn1:
                 save_it = st.button("Save")
@@ -154,13 +208,12 @@ def main():
                 clear_it = st.button("Clear")
 
             with col_btn3:
-                sgx_snapshot = {
-                    "Price": f"{data.get('current_price', 0):.2f}",
-                    "P/E Ratio": f"{data.get('pe', 'N/A')}",
-                    "Market Cap": f"{data.get('market_cap', 0)/1e9:.1f}B" if data.get('market_cap') else "N/A",
-                }
                 sgx_pdf = generate_pdf(data, AXES, "SGX", logic_descriptions, sgx_snapshot)
-                st.download_button("PDF Report", sgx_pdf, file_name=f"FRS1000_{name.replace(' ', '_')}.pdf", mime="application/pdf")
+                st.download_button("PDF", sgx_pdf, file_name=f"FRS1000_{name.replace(' ', '_')}.pdf", mime="application/pdf")
+
+            with col_btn4:
+                sgx_xlsx = generate_excel(data, AXES, "SGX", logic_descriptions, sgx_snapshot)
+                st.download_button("Excel", sgx_xlsx, file_name=f"FRS1000_{name.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
             # 3. ボタンごとの動作設定
             if save_it:
@@ -184,6 +237,8 @@ def main():
                 </div>
             </div>
             """, unsafe_allow_html=True)
+
+            render_score_delta(name, display_total)
 
             # 2. 中段：レーダーチャート（左）と DNA点数（右）
             col_left, col_right = st.columns([1.8, 1])
@@ -485,21 +540,25 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
 
         if bank_data:
 
-            cb_btn1, cb_btn2, cb_btn3, _ = st.columns([1, 1, 1.5, 6.5])
+            cb_snapshot = {
+                "10Y Yield": f"{bank_data['y10']:.2f}%" if bank_data.get('y10') is not None else "N/A",
+                "CPI YoY": f"{bank_data['cpi_yoy']:.2f}%",
+                "Unemployment": f"{bank_data['unemployment']:.2f}%",
+                "M2 YoY": f"{bank_data['m2_yoy']:.2f}%" if bank_data.get('m2_yoy') is not None else "N/A",
+                "Yield Curve": f"{bank_data['curve']:.2f}%" if bank_data.get('curve') is not None else "N/A",
+            }
+
+            cb_btn1, cb_btn2, cb_btn3, cb_btn4, _ = st.columns([1, 1, 1.5, 1.5, 5.5])
             with cb_btn1:
                 cb_save = st.button("Save", key="cb_save")
             with cb_btn2:
                 cb_clear = st.button("Clear", key="cb_clear")
             with cb_btn3:
-                cb_snapshot = {
-                    "10Y Yield": f"{bank_data['y10']:.2f}%" if bank_data.get('y10') is not None else "N/A",
-                    "CPI YoY": f"{bank_data['cpi_yoy']:.2f}%",
-                    "Unemployment": f"{bank_data['unemployment']:.2f}%",
-                    "M2 YoY": f"{bank_data['m2_yoy']:.2f}%" if bank_data.get('m2_yoy') is not None else "N/A",
-                    "Yield Curve": f"{bank_data['curve']:.2f}%" if bank_data.get('curve') is not None else "N/A",
-                }
                 cb_pdf = generate_pdf(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot)
-                st.download_button("PDF Report", cb_pdf, file_name=f"FRS1000_{bank.replace(' ', '_')}.pdf", mime="application/pdf", key="cb_pdf")
+                st.download_button("PDF", cb_pdf, file_name=f"FRS1000_{bank.replace(' ', '_')}.pdf", mime="application/pdf", key="cb_pdf")
+            with cb_btn4:
+                cb_xlsx = generate_excel(bank_data, CB_AXES, "Central Banks", cb_logic_descriptions, cb_snapshot)
+                st.download_button("Excel", cb_xlsx, file_name=f"FRS1000_{bank.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="cb_xlsx")
 
             if cb_save:
                 st.session_state.saved_cb_data = bank_data
@@ -520,6 +579,8 @@ Official Launch: March 1, 2026 | Full Institutional Engine Unlocked
                 </div>
             </div>
             """, unsafe_allow_html=True)
+
+            render_score_delta(bank, display_total_cb)
 
             # --- 2. レーダーチャート（左）＋ スコアカード（右） ---
             cb_col_left, cb_col_right = st.columns([1.8, 1])
@@ -743,7 +804,14 @@ institutional-grade data and full historical scoring.
 
         if comm_data:
 
-            cm_btn1, cm_btn2, cm_btn3, _ = st.columns([1, 1, 1.5, 6.5])
+            comm_snapshot = {
+                "Price": f"${comm_data['current_price']:.2f}",
+                "52W High": f"${comm_data['high_52w']:.2f}",
+                "YoY Change": f"{comm_data['yoy_change']:.2f}%",
+                "20D Volatility": f"{comm_data['vol_20d']:.2f}%",
+            }
+
+            cm_btn1, cm_btn2, cm_btn3, cm_btn4, _ = st.columns([1, 1, 1.5, 1.5, 5.5])
             with cm_btn1:
                 if st.button("Save", key="comm_save"):
                     st.session_state.saved_comm_data = comm_data
@@ -753,14 +821,11 @@ institutional-grade data and full historical scoring.
                     st.session_state.saved_comm_data = None
                     st.rerun()
             with cm_btn3:
-                comm_snapshot = {
-                    "Price": f"${comm_data['current_price']:.2f}",
-                    "52W High": f"${comm_data['high_52w']:.2f}",
-                    "YoY Change": f"{comm_data['yoy_change']:.2f}%",
-                    "20D Volatility": f"{comm_data['vol_20d']:.2f}%",
-                }
                 comm_pdf = generate_pdf(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot)
-                st.download_button("PDF Report", comm_pdf, file_name=f"FRS1000_{asset.replace(' ', '_')}.pdf", mime="application/pdf", key="comm_pdf")
+                st.download_button("PDF", comm_pdf, file_name=f"FRS1000_{asset.replace(' ', '_')}.pdf", mime="application/pdf", key="comm_pdf")
+            with cm_btn4:
+                comm_xlsx = generate_excel(comm_data, COMM_AXES, "Commodities", comm_logic_descriptions, comm_snapshot)
+                st.download_button("Excel", comm_xlsx, file_name=f"FRS1000_{asset.replace(' ', '_')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", key="comm_xlsx")
 
             # --- 1. Total Score ---
             st.markdown(f"""
@@ -772,6 +837,8 @@ institutional-grade data and full historical scoring.
                 </div>
             </div>
             """, unsafe_allow_html=True)
+
+            render_score_delta(asset, int(comm_data['total']))
 
             # --- 2. Radar + Score Cards ---
             cm_col_left, cm_col_right = st.columns([1.8, 1])
@@ -928,6 +995,111 @@ natural gas, agricultural products, and more with real-time data.
 
         else:
             st.warning("Commodity data could not be loaded.")
+
+    # --- Rankings TAB ---
+    with tab4:
+        st.markdown(
+            "<div style='font-size:1.5em; font-weight:900; color:#1e3a8a; margin-bottom:20px;'>All Assets Ranking</div>",
+            unsafe_allow_html=True
+        )
+
+        # Collect all scores
+        ranking_rows = []
+
+        # SGX
+        sgx_stocks = [
+            {"name": "DBS Group", "symbol": "D05"},
+            {"name": "Singtel", "symbol": "Z74"},
+            {"name": "OCBC Bank", "symbol": "O39"},
+            {"name": "Keppel Ltd", "symbol": "BN4"},
+            {"name": "CapitaLand Investment", "symbol": "9CI"},
+        ]
+        for s in sgx_stocks:
+            d = fetch_data(s["symbol"], s["name"])
+            if d and not d.get("_loading"):
+                ranking_rows.append({"Asset": s["name"], "Category": "SGX", "Score": int(d["total"])})
+
+        # Central Banks
+        for b in ["MAS", "Federal Reserve", "European Central Bank", "Bank of Japan", "Bank of England"]:
+            d = fetch_central_bank_data(b)
+            if d:
+                ranking_rows.append({"Asset": b, "Category": "Central Bank", "Score": int(d["total"])})
+
+        # Commodities
+        for c in ["WTI Crude Oil", "Gold", "Copper"]:
+            d = fetch_commodity_data(c)
+            if d:
+                ranking_rows.append({"Asset": c, "Category": "Commodity", "Score": int(d["total"])})
+
+        if ranking_rows:
+            df_rank = pd.DataFrame(ranking_rows).sort_values("Score", ascending=False).reset_index(drop=True)
+            df_rank.index = df_rank.index + 1
+            df_rank.index.name = "Rank"
+
+            # Delta from daily history
+            history = _load_scores_history()
+            dates = sorted(history.keys(), reverse=True) if history else []
+            deltas = []
+            for _, row in df_rank.iterrows():
+                prev = None
+                for dt in dates:
+                    prev = history[dt].get(row["Asset"])
+                    if prev is not None:
+                        break
+                if prev is not None:
+                    d_val = row["Score"] - prev
+                    deltas.append(f"{d_val:+d}")
+                else:
+                    deltas.append("-")
+            df_rank["Change"] = deltas
+
+            # Render as styled cards
+            for idx, row in df_rank.iterrows():
+                score = row["Score"]
+                if score >= 800:
+                    bar_color = "#10b981"
+                elif score >= 600:
+                    bar_color = "#2E7BE6"
+                elif score >= 400:
+                    bar_color = "#f59e0b"
+                else:
+                    bar_color = "#ef4444"
+
+                change_str = row["Change"]
+                if change_str != "-":
+                    val = int(change_str)
+                    if val > 0:
+                        change_html = f'<span style="color:#10b981; font-weight:700;">&#9650; {change_str}</span>'
+                    elif val < 0:
+                        change_html = f'<span style="color:#ef4444; font-weight:700;">&#9660; {change_str}</span>'
+                    else:
+                        change_html = f'<span style="color:#94a3b8; font-weight:700;">&#9644; 0</span>'
+                else:
+                    change_html = '<span style="color:#94a3b8;">-</span>'
+
+                cat_colors = {"SGX": "#2E7BE6", "Central Bank": "#8b5cf6", "Commodity": "#f59e0b"}
+                cat_color = cat_colors.get(row["Category"], "#666")
+
+                st.markdown(f"""
+                <div style="display:flex; align-items:center; padding:14px 20px; background:#fff; border-radius:12px; margin-bottom:8px; border:1px solid #e2e8f0; box-shadow:0 1px 3px rgba(0,0,0,0.04);">
+                    <div style="font-size:1.4em; font-weight:900; color:#94a3b8; width:40px;">#{idx}</div>
+                    <div style="flex:1;">
+                        <div style="font-size:1.05em; font-weight:700; color:#1e293b;">{row['Asset']}</div>
+                        <span style="font-size:0.75em; background:{cat_color}; color:#fff; padding:2px 8px; border-radius:20px;">{row['Category']}</span>
+                    </div>
+                    <div style="text-align:right; margin-right:20px;">
+                        {change_html}
+                    </div>
+                    <div style="text-align:right; min-width:80px;">
+                        <div style="font-size:1.5em; font-weight:900; color:{bar_color};">{score}</div>
+                        <div style="background:#f1f5f9; border-radius:4px; height:6px; width:80px; margin-top:4px;">
+                            <div style="background:{bar_color}; height:6px; border-radius:4px; width:{score/10}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.info("Loading scores... please wait a moment and refresh.")
 
 
 # 💡 ここからは if data: ブロックの外側。一番左に配置
