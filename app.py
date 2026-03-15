@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
 from ui_components import inject_css, render_radar_chart
-from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data, fetch_news
+from data_logic import fetch_data, fetch_central_bank_data, fetch_commodity_data, fetch_news, compute_hist_scores_commodity, compute_hist_scores_sgx
 
 APP_TITLE = "FRS-1000 — SGX Dashboard"
 
@@ -232,6 +232,21 @@ def main():
                     dragmode=False
                 )
                 st.plotly_chart(fig_p, use_container_width=True)
+
+            # Score History
+            st.markdown("<div class='section-title'>V-B. Score History</div>", unsafe_allow_html=True)
+            hist_s = compute_hist_scores_sgx(data.get('price_hist'))
+            if hist_s is not None and len(hist_s) > 0:
+                fig_hs = go.Figure()
+                fig_hs.add_trace(go.Scatter(x=hist_s.index, y=hist_s.values, mode='lines', name=name, line=dict(color='#2E7BE6', width=2), fill='tozeroy', fillcolor='rgba(46,123,230,0.05)'))
+                if st.session_state.saved_data and st.session_state.saved_data.get('price_hist') is not None:
+                    saved_hs = compute_hist_scores_sgx(st.session_state.saved_data['price_hist'])
+                    if saved_hs is not None:
+                        fig_hs.add_trace(go.Scatter(x=saved_hs.index, y=saved_hs.values, mode='lines', name=st.session_state.saved_data['name'], line=dict(color='#F4A261', width=2)))
+                fig_hs.update_layout(yaxis=dict(range=[0,1000], title="Score"), height=280, margin=dict(l=0,r=0,t=10,b=0), plot_bgcolor='white', hovermode="x unified", clickmode='none', dragmode=False)
+                st.plotly_chart(fig_hs, use_container_width=True, config={"displayModeBar": False})
+            else:
+                st.caption("Score history unavailable — insufficient price data.")
 
             # 4. Snapshot（比較対応版）
             st.markdown("<div class='section-title'>VI. Snapshot Comparison</div>", unsafe_allow_html=True)
@@ -724,6 +739,21 @@ institutional-grade data and full historical scoring.
                 dragmode=False
             )
             st.plotly_chart(fig_cp, use_container_width=True)
+
+            # Score History
+            st.markdown("<div class='section-title'>IV-B. Score History</div>", unsafe_allow_html=True)
+            hist_c = compute_hist_scores_commodity(comm_data.get('price_hist'))
+            if hist_c is not None and len(hist_c) > 0:
+                fig_hc = go.Figure()
+                fig_hc.add_trace(go.Scatter(x=hist_c.index, y=hist_c.values, mode='lines', name=asset, line=dict(color='#2E7BE6', width=2), fill='tozeroy', fillcolor='rgba(46,123,230,0.05)'))
+                if saved_cm and saved_cm.get('price_hist') is not None:
+                    saved_hc = compute_hist_scores_commodity(saved_cm['price_hist'])
+                    if saved_hc is not None:
+                        fig_hc.add_trace(go.Scatter(x=saved_hc.index, y=saved_hc.values, mode='lines', name=saved_cm['name'], line=dict(color='#F4A261', width=2)))
+                fig_hc.update_layout(yaxis=dict(range=[0,1000], title="Score"), height=280, margin=dict(l=0,r=0,t=10,b=0), plot_bgcolor='white', hovermode="x unified", clickmode='none', dragmode=False)
+                st.plotly_chart(fig_hc, use_container_width=True, config={"displayModeBar": False})
+            else:
+                st.caption("Score history unavailable — insufficient price data.")
 
             # --- 5. News ---
             st.markdown("<div class='section-title'>V. Latest News</div>", unsafe_allow_html=True)

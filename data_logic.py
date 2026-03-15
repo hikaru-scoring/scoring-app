@@ -529,3 +529,51 @@ def fetch_news(ticker_symbol, max_items=5):
         return results
     except Exception:
         return []
+
+
+def compute_hist_scores_commodity(price_hist):
+    """過去の商品スコアを価格データから月次で疑似計算する"""
+    import pandas as pd
+    if price_hist is None or len(price_hist) < 252:
+        return None
+    close = price_hist.resample('ME').last().dropna()
+    scores = {}
+    for i in range(12, len(close)):
+        w = close.iloc[:i+1]
+        last     = float(w.iloc[-1])
+        avg_1y   = float(w.tail(12).mean())
+        high_52w = float(w.tail(12).max())
+        prev_1y  = float(w.iloc[-12])
+        prev_3m  = float(w.iloc[-3]) if len(w) >= 3 else float(w.iloc[0])
+        vol      = float(w.pct_change().tail(12).std() * 100)
+        yoy      = ((last / prev_1y) - 1) * 100
+        mom      = ((last / prev_3m) - 1) * 100
+        total = int(sum([
+            min(max(100 + mom * 2,              0), 200),
+            min(max(200 - vol * 8,              0), 200),
+            min(max((last / avg_1y) * 100,      0), 200),
+            min(max((last / high_52w) * 200,    0), 200),
+            min(max(100 + yoy * 1.5,            0), 200),
+        ]))
+        scores[w.index[-1]] = total
+    return pd.Series(scores)
+
+
+def compute_hist_scores_sgx(price_hist):
+    """過去のSGX銘柄スコアを価格データから月次で疑似計算する（価格ベース3軸 + 中立100×2）"""
+    import pandas as pd
+    if price_hist is None or len(price_hist) < 252:
+        return None
+    close = price_hist.resample('ME').last().dropna()
+    scores = {}
+    for i in range(12, len(close)):
+        w        = close.iloc[:i+1]
+        last     = float(w.iloc[-1])
+        avg_12m  = float(w.tail(12).mean())
+        high_52w = float(w.tail(12).max())
+        vol      = float(w.pct_change().tail(12).std() * 100)
+        ff = min(max((last / avg_12m) * 100,  0), 200)   # Future Focus
+        fs = min(max((last / high_52w) * 200, 0), 200)   # Financial Strength
+        mp = min(max(200 - vol * 20,          0), 200)   # Market Position
+        scores[w.index[-1]] = int(ff + fs + mp + 100 + 100)
+    return pd.Series(scores)
